@@ -77,6 +77,27 @@ pick up changes.
 - tmux, themed status bar (Linux/Termux only — no native Windows port; use WSL)
 - Superfile (`spf`), themed to match
 
+## Themes
+
+Real captures of the Oh My Posh prompt in each theme — same repo, same
+directory, only the `--config` file changed. Gruvbox is the official
+[gruvbox.omp.json](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/themes/gruvbox.omp.json)
+(its own segment layout); the rest share Dracula's/Catppuccin's segment
+layout, just recolored — see the picker note below for which is which.
+
+| | |
+|---|---|
+| **Dracula**<br>![Dracula](docs/screenshots/prompt-dracula.png) | **Catppuccin**<br>![Catppuccin](docs/screenshots/prompt-catppuccin.png) |
+| **Gruvbox**<br>![Gruvbox](docs/screenshots/prompt-gruvbox.png) | **Nord**<br>![Nord](docs/screenshots/prompt-nord.png) |
+| **Tokyo Night**<br>![Tokyo Night](docs/screenshots/prompt-tokyonight.png) | **Rose Pine**<br>![Rose Pine](docs/screenshots/prompt-rosepine.png) |
+| **Everforest**<br>![Everforest](docs/screenshots/prompt-everforest.png) | |
+
+Only Dracula, Catppuccin, and Gruvbox have an official upstream
+oh-my-posh theme with real powerline color-bar segments — Nord, Tokyo
+Night, Rose Pine, and Everforest are produced by recoloring Dracula's
+template with each theme's own palette (same layout, guaranteed to
+render, just repainted).
+
 ## Walkthrough
 
 1. **Run the script for your platform** (see [Usage](#usage)). From a real
