@@ -20,20 +20,35 @@ the prompt and keep the Dracula + JetBrainsMono defaults.
 
 ## Usage
 
+Clone the repo and run the script for your platform, or install directly
+with the one-liner below (uses process substitution / `iex`, not a plain
+pipe, so the interactive font/theme picker still works — a straight
+`curl | bash` pipe would consume stdin with the script itself and silently
+force the non-interactive defaults).
+
 **Ubuntu / Debian / Raspberry Pi OS**
 ```
 bash scripts/setup-ubuntu.sh
+```
+```
+bash <(curl -fsSL https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-ubuntu.sh)
 ```
 
 **Termux (Android)**
 ```
 bash scripts/setup-termux.sh
 ```
+```
+bash <(curl -fsSL https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-termux.sh)
+```
 
 **Windows (PowerShell, run as Administrator)**
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
 .\scripts\setup-windows.ps1
+```
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; iex (irm https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-windows.ps1)
 ```
 
 All scripts are idempotent — safe to re-run after a partial failure or to
