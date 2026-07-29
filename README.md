@@ -118,3 +118,30 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   patch, and idempotency on a second run — executed for real. (`winget`
   itself and Windows font installation can't be exercised outside real
   Windows, so those two steps are still unverified beyond a syntax check.)
+- **Fixed (critical):** `setup-termux.sh`'s Superfile install was completely
+  broken, 100% reproducible. The release tarball nests the binary under
+  `dist/superfile-linux-v<tag>-<arch>/spf`, but the script did `cp ./spf`,
+  which never exists at that path — every real run of this step would fail.
+  Since Superfile has no Termux package, this fallback is the *only* install
+  path on Termux, so this had never actually worked.
+- **Fixed:** the same script's oh-my-posh Android fallback mapped
+  `aarch64` → `posh-android-arm64`, an asset that doesn't exist (verified
+  against the actual release — oh-my-posh publishes exactly one Android
+  build, `posh-android-arm`). Combined with `set -e`, a 404 here silently
+  killed the rest of the script on **the most common real Android
+  architecture**, with zero remaining steps run. Now hardcoded to the one
+  asset that actually exists, with a graceful message instead of a bare
+  `wget` failure if that ever changes again.
+- **Fixed:** Superfile's latest-release lookup on Termux shells out to
+  `api.github.com` unauthenticated with no error handling — a rate limit
+  or network hiccup (realistic on a shared mobile/carrier IP) left `SPF_TAG`
+  empty and, again via `set -e`, silently killed the rest of the script.
+  Now checked explicitly with a clear fallback message.
+- All of the above found by actually running `setup-termux.sh` end-to-end
+  on a real (non-Termux) Linux box, with `pkg` mocked as a thin wrapper
+  around `apt` (mirroring what `pkg` really is in Termux) so the rest of
+  the script's logic — Oh My Zsh + plugins, font fetch, Dracula theme,
+  Superfile install/theme-patch, `.zshrc` config, and idempotency across a
+  second run — executed for real, including genuinely downloading and
+  running the real Android `posh-android-arm` binary and Linux `spf`
+  binary produced by the fixes above.

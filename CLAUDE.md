@@ -46,6 +46,18 @@ anyone who wants real zsh on Windows.
   array (falsy in an `if`), not `$true`. Always guard with
   `[string]::IsNullOrEmpty($content) -or ...` first, or a fresh `$PROFILE`
   silently skips getting configured while the script reports success.
+- oh-my-posh's Android fallback binary comes in exactly one build,
+  `posh-android-arm` — there is no `posh-android-arm64` or `-amd64` asset
+  (confirmed against actual release assets, not assumed). Don't arch-map
+  this one the way the Linux/Windows targets are mapped; hardcode `arm`.
+- Superfile's release tarball nests the binary under
+  `dist/superfile-linux-v<tag>-<arch>/spf`, not at the top level — `cp` the
+  full nested path, not `./spf`.
+- Any script step that shells out to `api.github.com` unauthenticated (e.g.
+  Superfile's latest-tag lookup on Termux) must treat a failure as
+  recoverable, not fatal: it's rate-limited per IP, real on a shared
+  mobile/carrier connection, and a bare `set -e` script dies silently with
+  zero remaining steps run if the failure isn't checked explicitly.
 
 ## Known gaps / open questions
 

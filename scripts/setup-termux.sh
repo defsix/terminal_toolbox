@@ -73,16 +73,19 @@ echo "=== 4/6: oh-my-posh ==="
 if ! command -v oh-my-posh &> /dev/null; then
   pkg install -y oh-my-posh || {
     echo "termux package unavailable, falling back to GitHub binary"
-    ARCH=$(uname -m)
-    case "$ARCH" in
-      aarch64) POSH_ARCH="arm64" ;;
-      armv7l|armv8l) POSH_ARCH="arm" ;;
-      x86_64) POSH_ARCH="amd64" ;;
-      *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
-    esac
-    wget -q "https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-android-${POSH_ARCH}" \
-      -O "$PREFIX/bin/oh-my-posh"
-    chmod +x "$PREFIX/bin/oh-my-posh"
+    # oh-my-posh publishes exactly one Android build (posh-android-arm) —
+    # unlike its Linux targets, there's no separate arm64/amd64 asset. An
+    # earlier arch-mapped URL (posh-android-arm64/amd64) 404'd on every real
+    # aarch64 device — the most common real Android architecture — which,
+    # combined with `set -e`, silently killed the rest of this script with
+    # zero remaining steps run. Don't arch-map this one; there's only one URL.
+    if wget -q "https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-android-arm" \
+         -O "$PREFIX/bin/oh-my-posh"; then
+      chmod +x "$PREFIX/bin/oh-my-posh"
+    else
+      rm -f "$PREFIX/bin/oh-my-posh"
+      echo "Couldn't fetch the posh-android-arm binary — skipping oh-my-posh install. Install manually from https://ohmyposh.dev once it's available for your device."
+    fi
   }
 else
   echo "already installed, skipping"
@@ -114,11 +117,22 @@ if ! command -v spf &> /dev/null; then
   esac
   if [ -n "$SPF_ARCH" ]; then
     cd /tmp
-    SPF_TAG=$(curl -s https://api.github.com/repos/yorukot/superfile/releases/latest | grep -oP '"tag_name": "v\K[^"]+')
-    wget -q "https://github.com/yorukot/superfile/releases/download/v${SPF_TAG}/superfile-linux-v${SPF_TAG}-${SPF_ARCH}.tar.gz"
-    tar -xzf "superfile-linux-v${SPF_TAG}-${SPF_ARCH}.tar.gz"
-    cp ./spf "$PREFIX/bin/spf"
-    chmod +x "$PREFIX/bin/spf"
+    # The GitHub API is unauthenticated here and rate-limited per IP — on a
+    # shared mobile/carrier connection that's a real way for this to fail.
+    # A prior version let a failed lookup (empty SPF_TAG) or failed download
+    # fall through to `wget`/`tar`, which, combined with `set -e`, silently
+    # killed the rest of the script with zero remaining steps run.
+    SPF_TAG=$(curl -s https://api.github.com/repos/yorukot/superfile/releases/latest | grep -oP '"tag_name": "v\K[^"]+') || true
+    if [ -z "$SPF_TAG" ]; then
+      echo "Couldn't determine the latest Superfile release (GitHub API unreachable or rate-limited) — skipping. Install manually from https://superfile.dev"
+    elif ! wget -q "https://github.com/yorukot/superfile/releases/download/v${SPF_TAG}/superfile-linux-v${SPF_TAG}-${SPF_ARCH}.tar.gz"; then
+      echo "Couldn't download Superfile v${SPF_TAG} for ${SPF_ARCH} — skipping. Install manually from https://superfile.dev"
+    else
+      tar -xzf "superfile-linux-v${SPF_TAG}-${SPF_ARCH}.tar.gz"
+      # The tarball nests the binary under dist/<name>/spf, not at the top level.
+      cp "./dist/superfile-linux-v${SPF_TAG}-${SPF_ARCH}/spf" "$PREFIX/bin/spf"
+      chmod +x "$PREFIX/bin/spf"
+    fi
   else
     echo "Skipping superfile — install manually from https://superfile.dev"
   fi
