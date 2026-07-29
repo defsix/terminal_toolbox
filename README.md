@@ -155,203 +155,90 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
 ## Changelog
 
 ### 2026-07-29
-- Enabled `zsh-autosuggestions` and `zsh-syntax-highlighting` as Oh My Zsh
-  plugins on Ubuntu and Termux (previously Oh My Zsh was installed but left
-  on its stock config with no extra plugins).
-- Disabled Oh My Zsh's own `ZSH_THEME` on install so it no longer loads a
-  theme that Oh My Posh immediately overwrites.
+**Oh My Zsh / shell setup**
+- Enabled the `zsh-autosuggestions` and `zsh-syntax-highlighting` plugins and
+  disabled Oh My Zsh's own `ZSH_THEME` (Oh My Posh draws the prompt instead).
 - **Fixed:** on a machine that already has a `.zshrc`, Oh My Zsh's installer
-  (`KEEP_ZSHRC=yes`) leaves it untouched and never adds its own
-  `source .../oh-my-zsh.sh` line — so the plugin patches above were silently
-  becoming no-ops (found by actually dogfooding the script). Both scripts
-  now detect this and bootstrap Oh My Zsh into the existing `.zshrc`
-  themselves instead of assuming its stock template is present.
-- **Fixed:** Superfile's `spf path-list` no longer initializes the config
-  file as of v1.6.0 (it just prints paths now) — `spf --fix-config-file` is
-  the current way to generate `config.toml`/`hotkeys.toml` non-interactively.
-  Also switched the patched `theme = "dracula"` line to double quotes to
-  match Superfile's own generated format.
-- Added this Walkthrough section and this Changelog.
+  (`KEEP_ZSHRC=yes`) leaves it untouched and never sources `oh-my-zsh.sh`,
+  silently no-op'ing the plugin patches above. Both scripts now detect this
+  and bootstrap Oh My Zsh into the existing `.zshrc` themselves.
+
+**Reliability fixes** (all found by actually dogfooding each script
+end-to-end, not just reading the code)
+- Superfile's `spf path-list` stopped initializing config as of v1.6.0 (it
+  only prints paths now) — switched to `spf --fix-config-file`.
+- `setup-windows.ps1`'s profile step silently did nothing on a fresh
+  machine: `Get-Content -Raw` on a brand-new `$PROFILE` returns `$null`,
+  and `$null -notmatch <pattern>` is a falsy empty array, not `$true`.
+- `setup-termux.sh`'s only Superfile install path was 100% broken — the
+  release tarball nests the binary under `dist/<name>/spf`, not at the top
+  level. Its oh-my-posh Android fallback also 404'd on `posh-android-arm64`
+  (doesn't exist; oh-my-posh ships exactly one Android build,
+  `posh-android-arm`) — on the most common real Android architecture,
+  combined with `set -e`, this silently killed the rest of the script.
+- Unauthenticated `api.github.com` release lookups (Superfile on Termux,
+  lsd's .deb fallback on Ubuntu) had no error handling — a rate limit or
+  network hiccup left an empty tag var and, via `set -e`, silently killed
+  the rest of the script. Now checked explicitly with a clear message.
+- `setup-ubuntu.sh` piped the oh-my-posh/Superfile installers straight into
+  `bash` with no error handling — a failed fetch either silently "succeeds"
+  at installing nothing (empty script, exit 0) or, worse, executes a
+  proxy's rejection body as shell commands. Now downloads to a file, checks
+  it explicitly, then runs it.
+- Final cross-platform re-verification after the above landed found and
+  removed one leftover: a dead `alias spf='spf'` in `setup-ubuntu.sh`.
+
+**Tooling and theme system** (bat, fzf, zoxide, tmux, then the interactive
+picker, then two rounds of theme-quality fixes)
+- Added bat, fzf, zoxide, and tmux (Linux/Termux only for tmux) to all
+  three scripts, Dracula-themed initially. fzf is wired in through Oh My
+  Zsh's bundled `fzf` plugin rather than hand-rolling per-distro
+  shell-integration detection.
+- Added an interactive Nerd Font + theme picker (`[ -t 0 ]` / `IsInputRedirected`
+  gated, so piped/CI runs keep the JetBrainsMono + Dracula defaults) with a
+  strip-and-reappend mechanism so switching themes replaces the managed
+  config block instead of duplicating it.
+- **Found and fixed a real lsd bug:** Debian/Ubuntu's apt-packaged lsd
+  (1.0.0) only honors *numeric* xterm-256 color indices in `colors.yaml` —
+  it silently ignores the hex format both `dracula/lsd` and `catppuccin/lsd`
+  publish upstream (confirmed by A/B testing). lsd theming had actually
+  never been wired up by this repo before this pass at all. Fixed by
+  generating real `config.yaml`/`colors.yaml` files with precomputed
+  nearest-match numeric values for every theme except Dracula (whose
+  official file is already numeric).
+- The theme roster went through two correction passes once real screenshots
+  were compared against the target look:
+  1. Oh-my-posh's official per-flavor Catppuccin files
+     (`catppuccin_mocha`/`_macchiato`/`_frappe`/`_latte`) all use flat
+     `"style": "plain"` — no color-bar segments at all. Switched to
+     `catppuccin.omp.json`, the one official "core" theme that actually
+     uses powerline/diamond segments (hardcodes the Macchiato palette, so
+     bat/lsd/superfile/tmux match Macchiato too). 10 themes → 7.
+  2. Gruvbox/Nord/Tokyo Night/Rose Pine/Everforest then came back looking
+     muddy and too similar to each other — turned out to be structural,
+     not a color-picking mistake: those palettes are all, by design
+     philosophy, muted/pastel, and (confirmed by cloning oh-my-posh's full
+     122-file themes directory) no Nord/Rose Pine/Everforest theme exists
+     upstream at all. Replaced all 5 with genuine vibrant premade themes
+     instead (JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn), deriving
+     bat/lsd/tmux/Superfile colors from each one's own segment colors.
+  - **Discovered along the way:** Superfile supports fully custom theme
+    files, not just its bundled names
+    (https://superfile.dev/configure/custom-theme/) — every theme now gets
+    its own generated `~/.config/superfile/theme/<theme>.toml` from its own
+    role colors, instead of guessing the closest bundled name.
+  - **Testing note:** driving `setup-windows.ps1`'s picker outside real
+    Windows needs a PTY fix — PSReadLine blocks `Read-Host` on a
+    cursor-position query (`ESC[6n`) that a plain pseudo-tty never answers.
+    The test driver answers it (`ESC[1;1R`); a real terminal does this
+    itself, so it's a test-harness requirement, not a script issue.
+  - Each stage verified end-to-end on all three platforms: fresh install,
+    an interactive-picker theme switch, and idempotency (no duplicated
+    config on a same-theme rerun).
 - Replaced the placeholder screenshots under `docs/screenshots/` with real
-  captures: `scripts/setup-ubuntu.sh` was actually run end-to-end in a clean
-  container, then the resulting shell, `lsd -la`, and `spf` were recorded
-  with [VHS](https://github.com/charmbracelet/vhs) using each tool's real
-  Dracula theme/colors (Superfile's bundled `dracula.toml`, the official
-  [dracula/lsd](https://github.com/dracula/lsd) `colors.yaml`).
-- **Fixed:** `setup-windows.ps1`'s PowerShell-profile step silently did
-  nothing on a genuinely fresh machine. `Get-Content -Raw` on a brand-new
-  `$PROFILE` returns `$null`, and `$null -notmatch <pattern>` evaluates to
-  an empty (falsy) array rather than `$true` — so the script always hit the
-  "profile already configured, skipping" branch and never actually wrote
-  the Oh My Posh/lsd config, while still reporting success. Found and fixed
-  by actually running the script end-to-end under PowerShell Core, with
-  `winget` mocked to wire up real oh-my-posh/lsd/superfile binaries so the
-  rest of the script's logic — theme download, config patch, profile
-  patch, and idempotency on a second run — executed for real. (`winget`
-  itself and Windows font installation can't be exercised outside real
-  Windows, so those two steps are still unverified beyond a syntax check.)
-- **Fixed (critical):** `setup-termux.sh`'s Superfile install was completely
-  broken, 100% reproducible. The release tarball nests the binary under
-  `dist/superfile-linux-v<tag>-<arch>/spf`, but the script did `cp ./spf`,
-  which never exists at that path — every real run of this step would fail.
-  Since Superfile has no Termux package, this fallback is the *only* install
-  path on Termux, so this had never actually worked.
-- **Fixed:** the same script's oh-my-posh Android fallback mapped
-  `aarch64` → `posh-android-arm64`, an asset that doesn't exist (verified
-  against the actual release — oh-my-posh publishes exactly one Android
-  build, `posh-android-arm`). Combined with `set -e`, a 404 here silently
-  killed the rest of the script on **the most common real Android
-  architecture**, with zero remaining steps run. Now hardcoded to the one
-  asset that actually exists, with a graceful message instead of a bare
-  `wget` failure if that ever changes again.
-- **Fixed:** Superfile's latest-release lookup on Termux shells out to
-  `api.github.com` unauthenticated with no error handling — a rate limit
-  or network hiccup (realistic on a shared mobile/carrier IP) left `SPF_TAG`
-  empty and, again via `set -e`, silently killed the rest of the script.
-  Now checked explicitly with a clear fallback message.
-- All of the above found by actually running `setup-termux.sh` end-to-end
-  on a real (non-Termux) Linux box, with `pkg` mocked as a thin wrapper
-  around `apt` (mirroring what `pkg` really is in Termux) so the rest of
-  the script's logic — Oh My Zsh + plugins, font fetch, Dracula theme,
-  Superfile install/theme-patch, `.zshrc` config, and idempotency across a
-  second run — executed for real, including genuinely downloading and
-  running the real Android `posh-android-arm` binary and Linux `spf`
-  binary produced by the fixes above.
-- **Fixed (both silent-death classes at once):** `setup-ubuntu.sh` piped
-  the oh-my-posh and Superfile installers straight into `bash`
-  (`curl ... | bash`, `bash -c "$(curl ...)"`) with no error handling.
-  Reproduced live against `ohmyposh.dev`/`superfile.dev` (blocked by this
-  environment's egress policy, which made for genuine failure-path
-  testing): when the fetch fails outright, `bash` gets an empty script and
-  exits 0 — under `set -e` that reads as success, so the step silently
-  installed nothing with no indication anything went wrong. In another
-  run, the proxy's rejection body got fed to `bash` as literal commands
-  (`bash: line 1: Host: command not found`), which did trip `set -e` and
-  silently killed the rest of the script instead. Both steps now download
-  to a file, check it explicitly, then run it — either failure mode now
-  produces a clear message and the script continues. Also fixed the same
-  unguarded-`api.github.com` issue in the `lsd` fallback (same bug as the
-  Termux fix above, same fix). Confirmed the actual vendor Superfile
-  installer (fetched from its GitHub mirror, not the blocked domain) still
-  installs correctly end-to-end when the fetch succeeds, using its
-  `SPF_INSTALL_VERSION` override to bypass just the API-lookup call.
-- **Final cross-platform re-verification pass**, run after all of the above
-  fixes landed: all three scripts re-run fresh end-to-end (isolated
-  `$HOME`/`$PREFIX`/`$env:APPDATA` and mocked package managers/`winget`, as
-  described above) and again for idempotency, confirming every earlier fix
-  still holds together as a whole and nothing regressed. Turned up one
-  small leftover: a dead `alias spf='spf'` (aliasing a command to itself)
-  in `setup-ubuntu.sh`'s `.zshrc` block — removed.
-- **Added bat, fzf, zoxide, and tmux** (Linux/Termux only for tmux — no
-  native Windows port) to all three scripts, each idempotent and
-  Dracula-themed: bat via its own built-in "Dracula" theme, fzf via the
-  official `dracula/fzf` `FZF_DEFAULT_OPTS` colors and wired into zsh
-  through Oh My Zsh's bundled `fzf` plugin (rather than hand-rolling
-  per-distro shell-integration path detection — it already knows the
-  Debian/apt doc-examples path, Termux's `$PREFIX` path, and the modern
-  `fzf --zsh` flag), zoxide via `zoxide init`, and tmux via the official
-  `dracula/tmux` plugin cloned directly (no plugin-manager step needed).
-  Verified fresh-install and idempotent-rerun for all three platforms,
-  including a genuine `apt remove` of all four tools beforehand so the
-  install branches actually ran rather than short-circuiting on
-  already-present binaries; confirmed the real Dracula colors in `tmux`'s
-  status bar (`show-options -g status-style`) and bat's `--list-themes`
-  output. One real, environment-specific gap found along the way: a
-  minimized/`nodoc`-stripped Ubuntu (common in slim Docker base images,
-  not a real Desktop/Pi install — this repo's actual target) is missing
-  `/usr/share/doc/fzf/examples/*.zsh`, which the Oh My Zsh `fzf` plugin
-  needs on Debian/Ubuntu; harmless (the rest of the shell still loads
-  fine) but worth knowing if this is ever run inside a slim container.
-- **Added an interactive Nerd Font + theme picker, and 9 themes beyond
-  Dracula** (Catppuccin Mocha/Macchiato/Frappe/Latte, Gruvbox, Nord, Tokyo
-  Night, Rose Pine, Everforest — 10 total) to all three scripts. Run from a
-  real terminal, each script now opens with a numbered menu for font and
-  theme before installing anything; piped/CI runs (`[ -t 0 ]` in bash,
-  `[Console]::IsInputRedirected` in PowerShell) skip the prompt and keep the
-  JetBrainsMono + Dracula defaults. Rerunning with a different choice
-  replaces the previously-installed theme's config instead of layering on
-  top of it — `.zshrc`, `.tmux.conf`, and the PowerShell `$PROFILE` all
-  strip their old managed block before appending the new one.
-  - Only 6 of the 10 themes have an official upstream oh-my-posh theme
-    (Dracula + the 4 Catppuccin flavors + Gruvbox); the other 4 (Nord, Tokyo
-    Night, Rose Pine, Everforest) are produced by recoloring the proven
-    `dracula.omp.json` template in place (two-pass placeholder swap, so a
-    target color can never collide with a source color still waiting to be
-    replaced) — same schema, guaranteed to render, just repainted.
-  - **Found and fixed a real lsd bug along the way:** Debian/Ubuntu's
-    apt-packaged lsd (1.0.0) only honors *numeric* xterm-256 color indices
-    in `colors.yaml` — it silently ignores hex color strings, even though
-    both `dracula/lsd` and `catppuccin/lsd` publish their official
-    `colors.yaml` in hex. Confirmed by A/B testing: the official numeric
-    Dracula file rendered correctly, the official hex Catppuccin file
-    rendered identically to *no file at all* (proving it was dropped, not
-    partially applied). lsd's own theming had actually never been wired up
-    by this repo before this pass — no `config.yaml`/`colors.yaml`
-    generation existed at all, despite the walkthrough screenshot above
-    showing themed `lsd` output (that screenshot's config was hand-created
-    outside the script). Fixed by generating both files for real, with
-    numeric xterm-256 values (precomputed as the nearest match to each
-    theme's real hex colors) for every theme except Dracula, which keeps
-    using the official numeric upstream file.
-  - Verified end-to-end on all three platforms: default Dracula fresh
-    install, an interactive-picker-driven switch to Catppuccin Mocha
-    (exercising the official-asset-fetch path and the lsd numeric fix), an
-    interactive-picker-driven switch to a fully-recolored theme (Nord on
-    Ubuntu/Termux, Nord and Tokyo Night on Windows), idempotency on a
-    same-theme rerun (config regenerated but unchanged in substance, no
-    duplicated marker blocks), and — on Windows — that pre-existing
-    unrelated `$PROFILE` content survives a theme switch untouched.
-  - Testing `setup-windows.ps1`'s interactive picker outside real Windows
-    needed one non-obvious PTY fix: PSReadLine blocks `Read-Host` on a
-    cursor-position query (`ESC[6n`) it sends on startup, which a plain
-    pseudo-tty never answers — looks exactly like a hang with no error.
-    The test driver now answers it (`ESC[1;1R`); this is a test-harness
-    requirement, not a script issue — a real terminal answers it itself.
-- **Replaced the 4 Catppuccin flavors with a single `catppuccin` theme,
-  10 themes → 7.** Found the reason the walkthrough's Catppuccin prompt
-  never actually looked like the other themes' powerline color-bar style:
-  oh-my-posh's official per-flavor files (`catppuccin_mocha`/`_macchiato`/
-  `_frappe`/`_latte.omp.json`) all set `"style": "plain"` on every segment
-  — flat text, no color blocks, unlike Dracula's and Gruvbox's official
-  themes or this repo's own recolored Nord/Tokyo Night/Rose Pine/Everforest
-  templates. `catppuccin.omp.json` (the single "core" theme upstream,
-  contributed by IrwinJuice) is the one file that actually uses
-  `powerline`/`diamond` segments with real background colors — it
-  hardcodes the Macchiato palette, so bat/lsd/superfile/tmux for the
-  `catppuccin` choice now all match Macchiato too, for one consistent
-  look instead of 4 flavors where only 1 in 4 (Latte's numeric lsd colors
-  aside) actually rendered the intended style. Verified end-to-end on all
-  three platforms: the picker now lists 7 themes, selecting `catppuccin`
-  fetches the real color-bar `.omp.json` and matching Macchiato bat/lsd/
-  superfile/tmux config, and idempotency still holds (no duplicated
-  marker blocks on a same-theme rerun).
-- **Replaced Gruvbox/Nord/Tokyo Night/Rose Pine/Everforest with 5 genuine
-  premade oh-my-posh themes** (JanDeDobbeleer, Paradox, Aliens, Montys,
-  Unicorn) after those 5 came back looking muddy and too similar to each
-  other next to Dracula and Catppuccin. The reason turned out to be
-  structural, not a color-picking mistake: Gruvbox, Nord, Rose Pine, and
-  Everforest are all, by deliberate design philosophy, muted/pastel/
-  low-saturation palettes — that's their actual aesthetic identity — so no
-  role-color reassignment within the recolor-Dracula's-template mechanism
-  could make them pop the way a genuinely vibrant theme does. Cloned
-  oh-my-posh's full themes directory (122 files) to check for real
-  alternatives: no Nord, Rose Pine, or Everforest theme exists upstream at
-  all, and the closest Tokyo Night-ish ones (`nordtron`, `tokyonight_storm`,
-  `tokyo`) use flat `"style": "plain"` segments, not color-bar ones either.
-  Picked 5 real, vibrant, complementary premade themes instead and derived
-  each one's bat/lsd/tmux/Superfile colors from that same theme's own
-  segment backgrounds, so the whole terminal matches whichever one is
-  picked — it just isn't "real Nord" anymore, by design.
-  - **Also discovered Superfile supports fully custom theme files, not
-    just its bundled names** (confirmed by dropping a hand-edited `.toml`
-    under a name Superfile never shipped, into `~/.config/superfile/theme/`
-    — it loaded without error: https://superfile.dev/configure/custom-theme/).
-    Every theme (including Dracula and Catppuccin, not just the 5 new ones)
-    now gets its own generated `~/.config/superfile/theme/<theme>.toml`
-    built from that theme's own role colors, replacing the old approach of
-    mapping to the closest bundled Superfile theme name by guesswork.
-  - Verified end-to-end on all three platforms: the real `.omp.json` for
-    each of the 5 new themes renders genuine powerline color-bar segments
-    (confirmed visually, not just JSON-inspected), the generated Superfile
-    `.toml` and lsd `colors.yaml` match each theme's palette, and
-    idempotency still holds.
+  [VHS](https://github.com/charmbracelet/vhs) captures throughout, including
+  a small prompt screenshot per theme in the [Themes](#themes) section
+  above — actually run, actually recorded, not mockups.
+- Added the one-line curl-install commands in [Usage](#usage) (process
+  substitution / `iex`, not a plain pipe, so the interactive picker still
+  works over a piped install).
