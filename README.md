@@ -6,10 +6,10 @@ Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
 [fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
 [tmux](https://github.com/tmux/tmux), and [Superfile](https://superfile.dev).
 
-Run one interactively and it opens with a picker — 10 Nerd Fonts, 10 themes
-(Dracula, Catppuccin Mocha/Macchiato/Frappe/Latte, Gruvbox, Nord, Tokyo
-Night, Rose Pine, Everforest) — before anything installs. Piped/CI runs skip
-the prompt and keep the Dracula + JetBrainsMono defaults.
+Run one interactively and it opens with a picker — 10 Nerd Fonts, 7 themes
+(Dracula, Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest) —
+before anything installs. Piped/CI runs skip the prompt and keep the
+Dracula + JetBrainsMono defaults.
 
 > Screenshots below are real captures, not mockups: taken by actually running
 > `scripts/setup-ubuntu.sh` end-to-end, then recording the resulting shell
@@ -65,9 +65,8 @@ pick up changes.
   script replaces its managed config instead of duplicating it.
 - 10 Nerd Fonts to choose from: JetBrainsMono, FiraCode, CascadiaCode, Hack,
   Meslo, SourceCodePro, Iosevka, UbuntuMono, RobotoMono, Inconsolata
-- 10 themes, applied consistently across every tool below: Dracula,
-  Catppuccin Mocha, Catppuccin Macchiato, Catppuccin Frappe, Catppuccin
-  Latte, Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest
+- 7 themes, applied consistently across every tool below: Dracula,
+  Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest
 - Oh My Posh drawing the prompt (Oh My Zsh's own theme is disabled so the
   two don't fight over the prompt)
 - lsd as a drop-in `ls` replacement (`ll`, `la`, `lt` aliases included)
@@ -92,7 +91,7 @@ pick up changes.
    clock — in your chosen theme, on top of Oh My Zsh's `zsh-autosuggestions`
    (ghost-text completions from history) and `zsh-syntax-highlighting`
    (a command turns green once it resolves to something real, red if it
-   doesn't). Screenshots below are from a Dracula run — the other 9 themes
+   doesn't). Screenshots below are from a Dracula run — the other 6 themes
    recolor the same prompt/icons/status bar, not a different layout:
 
    ![Oh My Zsh + Oh My Posh, Dracula theme](docs/screenshots/oh-my-zsh-dracula.png)
@@ -114,7 +113,7 @@ pick up changes.
 5. **tmux.** Start a session with `tmux` — the status bar comes up themed
    immediately, no `prefix + I` plugin-manager step needed. Dracula uses the
    official [dracula/tmux](https://github.com/dracula/tmux) plugin (cloned
-   in directly by the script); the other 9 themes use a compact hand-colored
+   in directly by the script); the other 6 themes use a compact hand-colored
    status bar built from that theme's own palette, since not every theme has
    a maintained standalone (non-TPM) tmux port:
 
@@ -287,3 +286,21 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
     pseudo-tty never answers — looks exactly like a hang with no error.
     The test driver now answers it (`ESC[1;1R`); this is a test-harness
     requirement, not a script issue — a real terminal answers it itself.
+- **Replaced the 4 Catppuccin flavors with a single `catppuccin` theme,
+  10 themes → 7.** Found the reason the walkthrough's Catppuccin prompt
+  never actually looked like the other themes' powerline color-bar style:
+  oh-my-posh's official per-flavor files (`catppuccin_mocha`/`_macchiato`/
+  `_frappe`/`_latte.omp.json`) all set `"style": "plain"` on every segment
+  — flat text, no color blocks, unlike Dracula's and Gruvbox's official
+  themes or this repo's own recolored Nord/Tokyo Night/Rose Pine/Everforest
+  templates. `catppuccin.omp.json` (the single "core" theme upstream,
+  contributed by IrwinJuice) is the one file that actually uses
+  `powerline`/`diamond` segments with real background colors — it
+  hardcodes the Macchiato palette, so bat/lsd/superfile/tmux for the
+  `catppuccin` choice now all match Macchiato too, for one consistent
+  look instead of 4 flavors where only 1 in 4 (Latte's numeric lsd colors
+  aside) actually rendered the intended style. Verified end-to-end on all
+  three platforms: the picker now lists 7 themes, selecting `catppuccin`
+  fetches the real color-bar `.omp.json` and matching Macchiato bat/lsd/
+  superfile/tmux config, and idempotency still holds (no duplicated
+  marker blocks on a same-theme rerun).

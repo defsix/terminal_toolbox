@@ -2,11 +2,10 @@
 
 One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
 lsd, bat, fzf, zoxide, tmux, and Superfile. Run interactively, each script
-opens with a picker for one of 10 Nerd Fonts and one of 10 themes (Dracula,
-Catppuccin Mocha/Macchiato/Frappe/Latte, Gruvbox, Nord, Tokyo Night, Rose
-Pine, Everforest) before anything installs; non-interactive/CI runs keep the
-Dracula + JetBrainsMono defaults (tmux is Linux/Termux only — no native
-Windows port).
+opens with a picker for one of 10 Nerd Fonts and one of 7 themes (Dracula,
+Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest) before
+anything installs; non-interactive/CI runs keep the Dracula + JetBrainsMono
+defaults (tmux is Linux/Termux only — no native Windows port).
 
 ## Platforms
 
@@ -31,7 +30,7 @@ anyone who wants real zsh on Windows.
   when actually interactive — `[ -t 0 ]` in bash, `[Environment]::UserInteractive
   -and -not ([Console]::IsInputRedirected)` in PowerShell — so piped/CI runs
   silently keep the Dracula + JetBrainsMono defaults instead of hanging on a
-  read. All 10 themes and 10 fonts are plain arrays up top
+  read. All 7 themes and 10 fonts are plain arrays up top
   (`THEME_CHOICES`/`FONT_CHOICES` in bash, `$ThemeChoices`/`$FontChoices` in
   PowerShell) so adding one is a one-line change plus a new `case`/`switch` arm.
 - Theme data table: each theme is one `case "$THEME" in ... esac` arm (bash)
@@ -42,17 +41,27 @@ anyone who wants real zsh on Windows.
   asset exists. Switching the installed theme is "edit `$THEME`, rerun the
   script" — every managed config block is regenerated from scratch each run
   (see the strip-and-reappend note below), not hand-edited in place.
-- Oh My Posh theme: only 6 of the 10 themes have an official upstream
-  `.omp.json` (Dracula, the 4 Catppuccin flavors, Gruvbox) — the other 4
-  (Nord, Tokyo Night, Rose Pine, Everforest) have no maintained oh-my-posh
-  theme upstream, so the script fetches the proven `dracula.omp.json`
-  template and recolors it in place: a two-pass placeholder swap (real hex
-  → `@@ROLE@@` marker → target hex) so a target color can never collide
-  with a source color still waiting to be replaced. Whichever path produced
-  it, the result is saved per-theme as `~/.poshthemes/<theme>.omp.json` (or
-  `$HOME\.poshthemes\<theme>.omp.json` on Windows) and referenced by local
-  path in the shell init line — remote `--config` URLs work but re-fetch on
-  every new shell, which is slower.
+- Oh My Posh theme: only 3 of the 7 themes have an official upstream
+  `.omp.json` that actually renders a powerline color-bar prompt (Dracula,
+  Catppuccin, Gruvbox) — the other 4 (Nord, Tokyo Night, Rose Pine,
+  Everforest) have no maintained oh-my-posh theme upstream, so the script
+  fetches the proven `dracula.omp.json` template and recolors it in place: a
+  two-pass placeholder swap (real hex → `@@ROLE@@` marker → target hex) so a
+  target color can never collide with a source color still waiting to be
+  replaced. Whichever path produced it, the result is saved per-theme as
+  `~/.poshthemes/<theme>.omp.json` (or `$HOME\.poshthemes\<theme>.omp.json`
+  on Windows) and referenced by local path in the shell init line — remote
+  `--config` URLs work but re-fetch on every new shell, which is slower.
+- Catppuccin is a single theme, not 4 flavors: upstream oh-my-posh publishes
+  per-flavor files (`catppuccin_mocha`/`_macchiato`/`_frappe`/`_latte
+  .omp.json`), but every one of them sets `"style": "plain"` on every
+  segment — no powerline/diamond blocks, no background colors, just flat
+  text. `catppuccin.omp.json` (the single "core" theme, contributed by
+  IrwinJuice) is the one upstream file that actually uses
+  `"style": "powerline"`/`"diamond"` with real segment backgrounds; it
+  hardcodes Catppuccin Macchiato's palette. The script uses that one file
+  for the `catppuccin` theme choice, and matches bat/superfile/lsd/tmux to
+  Macchiato too so every tool agrees on the same flavor.
 - lsd theme: **numeric xterm-256 color indices only** — Debian/Ubuntu's
   apt-packaged lsd (1.0.0) silently ignores hex color strings in
   `colors.yaml` even though upstream `dracula/lsd` and `catppuccin/lsd`

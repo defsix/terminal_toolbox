@@ -1,6 +1,6 @@
 # One-stop terminal setup for Windows (PowerShell)
 # oh-my-posh, Nerd Font, lsd, bat, fzf, zoxide, superfile — pick your font and
-# theme below (10 themes, all Dracula-style ecosystems: Dracula, Catppuccin x4,
+# theme below (7 themes, all Dracula-style ecosystems: Dracula, Catppuccin,
 # Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest).
 #
 # Note: zsh / Oh My Zsh, and tmux, are Linux/macOS tools and don't run
@@ -17,7 +17,7 @@ $NerdFontName = "JetBrainsMono"   # default; the picker below can override this
 $Theme = "dracula"                # default; the picker below can override this
 
 $FontChoices = @("JetBrainsMono", "FiraCode", "CascadiaCode", "Hack", "Meslo", "SourceCodePro", "Iosevka", "UbuntuMono", "RobotoMono", "Inconsolata")
-$ThemeChoices = @("dracula", "catppuccin-mocha", "catppuccin-macchiato", "catppuccin-frappe", "catppuccin-latte", "gruvbox", "nord", "tokyonight", "rosepine", "everforest")
+$ThemeChoices = @("dracula", "catppuccin", "gruvbox", "nord", "tokyonight", "rosepine", "everforest")
 
 function Section($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }
 
@@ -67,33 +67,18 @@ switch ($Theme) {
     $SuperfileTheme = "dracula"
     $C = @{ BG="#282a36"; FG="#f8f8f2"; MUTED="#6272a4"; PURPLE="#bd93f9"; ORANGE="#ffb86c"; CYAN="#8be9fd"; PINK="#ff79c6"; YELLOW="#f1fa8c"; RED="#ff5555"; GREEN="#50fa7b" }
   }
-  "catppuccin-mocha" {
-    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_mocha.omp.json"
-    $BatThemeName = "Catppuccin Mocha"
-    $BatThemeUrl = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme"
-    $SuperfileTheme = "catppuccin-mocha"
-    $C = @{ BG="#1e1e2e"; FG="#cdd6f4"; MUTED="#6c7086"; PURPLE="#cba6f7"; ORANGE="#fab387"; CYAN="#94e2d5"; PINK="#f5c2e7"; YELLOW="#f9e2af"; RED="#f38ba8"; GREEN="#a6e3a1" }
-  }
-  "catppuccin-macchiato" {
-    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_macchiato.omp.json"
+  "catppuccin" {
+    # The official per-flavor files (catppuccin_mocha/_macchiato/_frappe/_latte
+    # .omp.json) all use "style": "plain" — no powerline color-bar segments at
+    # all. catppuccin.omp.json (the single "core" theme) is the one upstream
+    # file that actually uses powerline/diamond segments with real background
+    # colors; it hardcodes the Macchiato palette, so bat/superfile below match
+    # Macchiato too for visual consistency.
+    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin.omp.json"
     $BatThemeName = "Catppuccin Macchiato"
     $BatThemeUrl = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
     $SuperfileTheme = "catppuccin-macchiato"
     $C = @{ BG="#24273a"; FG="#cad3f5"; MUTED="#6e738d"; PURPLE="#c6a0f6"; ORANGE="#f5a97f"; CYAN="#8bd5ca"; PINK="#f5bde6"; YELLOW="#eed49f"; RED="#ed8796"; GREEN="#a6da95" }
-  }
-  "catppuccin-frappe" {
-    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_frappe.omp.json"
-    $BatThemeName = "Catppuccin Frappe"
-    $BatThemeUrl = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Frappe.tmTheme"
-    $SuperfileTheme = "catppuccin-frappe"
-    $C = @{ BG="#303446"; FG="#c6d0f5"; MUTED="#737994"; PURPLE="#ca9ee6"; ORANGE="#ef9f76"; CYAN="#81c8be"; PINK="#f4b8e4"; YELLOW="#e5c890"; RED="#e78284"; GREEN="#a6d189" }
-  }
-  "catppuccin-latte" {
-    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_latte.omp.json"
-    $BatThemeName = "Catppuccin Latte"
-    $BatThemeUrl = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Latte.tmTheme"
-    $SuperfileTheme = "catppuccin-latte"
-    $C = @{ BG="#eff1f5"; FG="#4c4f69"; MUTED="#9ca0b0"; PURPLE="#8839ef"; ORANGE="#fe640b"; CYAN="#179299"; PINK="#ea76cb"; YELLOW="#df8e1d"; RED="#d20f39"; GREEN="#40a02b" }
   }
   "gruvbox" {
     $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/gruvbox.omp.json"

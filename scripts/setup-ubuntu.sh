@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # One-stop terminal setup for Ubuntu / Debian / Raspberry Pi OS
 # zsh + oh-my-zsh, Nerd Font, oh-my-posh, lsd, bat, fzf, zoxide, tmux,
-# superfile — pick your font and theme below (10 themes, all Dracula-style
-# ecosystems: Dracula, Catppuccin x4, Gruvbox, Nord, Tokyo Night, Rose Pine,
+# superfile — pick your font and theme below (7 themes, all Dracula-style
+# ecosystems: Dracula, Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine,
 # Everforest).
 # Usage: bash setup-ubuntu.sh
 set -e
@@ -12,7 +12,7 @@ THEME="dracula"                  # default; the picker below can override this
 FONT_DIR="$HOME/.local/share/fonts"
 
 FONT_CHOICES=(JetBrainsMono FiraCode CascadiaCode Hack Meslo SourceCodePro Iosevka UbuntuMono RobotoMono Inconsolata)
-THEME_CHOICES=(dracula catppuccin-mocha catppuccin-macchiato catppuccin-frappe catppuccin-latte gruvbox nord tokyonight rosepine everforest)
+THEME_CHOICES=(dracula catppuccin gruvbox nord tokyonight rosepine everforest)
 
 # Prints a numbered menu to stderr, reads a choice from stdin, echoes the
 # selected option to stdout (or the default on empty/invalid input).
@@ -72,40 +72,19 @@ case "$THEME" in
     TMUX_MODE="dracula-plugin"
     C_BG="#282a36"; C_FG="#f8f8f2"; C_MUTED="#6272a4"; C_PURPLE="#bd93f9"; C_ORANGE="#ffb86c"; C_CYAN="#8be9fd"; C_BLUE="#8be9fd"; C_PINK="#ff79c6"; C_YELLOW="#f1fa8c"; C_RED="#ff5555"; C_GREEN="#50fa7b"
     ;;
-  catppuccin-mocha)
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_mocha.omp.json"
-    # catppuccin/lsd's official colors.yaml uses hex strings, which the
-    # apt-packaged lsd (1.0.0) silently ignores (numeric 256-color indices
-    # only, confirmed by testing) — generate our own like the rest below.
-    BAT_THEME_NAME="Catppuccin Mocha"
-    BAT_THEME_URL="https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme"
-    SUPERFILE_THEME="catppuccin-mocha"
-    C_BG="#1e1e2e"; C_FG="#cdd6f4"; C_MUTED="#6c7086"; C_PURPLE="#cba6f7"; C_ORANGE="#fab387"; C_CYAN="#94e2d5"; C_BLUE="#89b4fa"; C_PINK="#f5c2e7"; C_YELLOW="#f9e2af"; C_RED="#f38ba8"; C_GREEN="#a6e3a1"
-    L_BG=235; L_FG=189; L_MUTED=243; L_PURPLE=183; L_ORANGE=216; L_CYAN=116; L_BLUE=111; L_PINK=218; L_YELLOW=223; L_RED=211; L_GREEN=151
-    ;;
-  catppuccin-macchiato)
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_macchiato.omp.json"
+  catppuccin)
+    # The official per-flavor files (catppuccin_mocha/_macchiato/_frappe/_latte
+    # .omp.json) all use "style": "plain" — no powerline color-bar segments at
+    # all. catppuccin.omp.json (the single "core" theme) is the one upstream
+    # file that actually uses powerline/diamond segments with real background
+    # colors; it hardcodes the Macchiato palette, so bat/lsd/superfile below
+    # match Macchiato too for visual consistency.
+    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin.omp.json"
     BAT_THEME_NAME="Catppuccin Macchiato"
     BAT_THEME_URL="https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
     SUPERFILE_THEME="catppuccin-macchiato"
     C_BG="#24273a"; C_FG="#cad3f5"; C_MUTED="#6e738d"; C_PURPLE="#c6a0f6"; C_ORANGE="#f5a97f"; C_CYAN="#8bd5ca"; C_BLUE="#8aadf4"; C_PINK="#f5bde6"; C_YELLOW="#eed49f"; C_RED="#ed8796"; C_GREEN="#a6da95"
     L_BG=236; L_FG=189; L_MUTED=243; L_PURPLE=183; L_ORANGE=216; L_CYAN=116; L_BLUE=111; L_PINK=218; L_YELLOW=223; L_RED=210; L_GREEN=150
-    ;;
-  catppuccin-frappe)
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_frappe.omp.json"
-    BAT_THEME_NAME="Catppuccin Frappe"
-    BAT_THEME_URL="https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Frappe.tmTheme"
-    SUPERFILE_THEME="catppuccin-frappe"
-    C_BG="#303446"; C_FG="#c6d0f5"; C_MUTED="#737994"; C_PURPLE="#ca9ee6"; C_ORANGE="#ef9f76"; C_CYAN="#81c8be"; C_BLUE="#8caaee"; C_PINK="#f4b8e4"; C_YELLOW="#e5c890"; C_RED="#e78284"; C_GREEN="#a6d189"
-    L_BG=237; L_FG=189; L_MUTED=244; L_PURPLE=182; L_ORANGE=216; L_CYAN=115; L_BLUE=111; L_PINK=218; L_YELLOW=186; L_RED=174; L_GREEN=150
-    ;;
-  catppuccin-latte)
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_latte.omp.json"
-    BAT_THEME_NAME="Catppuccin Latte"
-    BAT_THEME_URL="https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Latte.tmTheme"
-    SUPERFILE_THEME="catppuccin-latte"
-    C_BG="#eff1f5"; C_FG="#4c4f69"; C_MUTED="#9ca0b0"; C_PURPLE="#8839ef"; C_ORANGE="#fe640b"; C_CYAN="#179299"; C_BLUE="#1e66f5"; C_PINK="#ea76cb"; C_YELLOW="#df8e1d"; C_RED="#d20f39"; C_GREEN="#40a02b"
-    L_BG=255; L_FG=240; L_MUTED=248; L_PURPLE=99; L_ORANGE=202; L_CYAN=30; L_BLUE=27; L_PINK=176; L_YELLOW=172; L_RED=161; L_GREEN=70
     ;;
   gruvbox)
     OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/gruvbox.omp.json"
