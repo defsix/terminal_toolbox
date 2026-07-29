@@ -69,7 +69,18 @@ fi
 echo "=== 4/6: oh-my-posh ==="
 if ! command -v oh-my-posh &> /dev/null; then
   mkdir -p "$HOME/.local/bin"
-  curl -s https://ohmyposh.dev/install.sh | bash -s -- -d "$HOME/.local/bin"
+  # Piping straight into `bash` hides failures two ways: if the fetch fails
+  # outright, bash gets an empty script and exits 0 (silently "succeeding"
+  # at installing nothing — set -e never fires); if the connection is
+  # blocked at a proxy that returns an error body over the tunnel, that
+  # body can get executed as garbage shell commands instead. Download to a
+  # file and check it explicitly instead of trusting the pipe's exit code.
+  if curl -fsSL https://ohmyposh.dev/install.sh -o /tmp/ohmyposh-install.sh && [ -s /tmp/ohmyposh-install.sh ]; then
+    bash /tmp/ohmyposh-install.sh -d "$HOME/.local/bin" || echo "oh-my-posh's installer failed — skipping. Install manually from https://ohmyposh.dev"
+    rm -f /tmp/ohmyposh-install.sh
+  else
+    echo "Couldn't fetch the oh-my-posh installer from ohmyposh.dev — skipping. Install manually from https://ohmyposh.dev once reachable."
+  fi
 else
   echo "already installed, skipping"
 fi
@@ -89,10 +100,20 @@ if ! command -v lsd &> /dev/null; then
     echo "apt package unavailable, falling back to .deb release"
     cd /tmp
     DEB_ARCH=$(dpkg --print-architecture)   # amd64 / arm64 / armhf — covers Raspberry Pi too
-    LSD_TAG=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep -oP '"tag_name": "\K[^"]+')
-    LSD_VER="${LSD_TAG#v}"
-    wget -q "https://github.com/lsd-rs/lsd/releases/download/${LSD_TAG}/lsd_${LSD_VER}_${DEB_ARCH}.deb"
-    sudo dpkg -i "lsd_${LSD_VER}_${DEB_ARCH}.deb"
+    # The GitHub API is unauthenticated here and rate-limited per IP. A prior
+    # version let a failed lookup (empty LSD_TAG) fall through to `wget`,
+    # which, combined with `set -e`, silently killed the rest of the script.
+    LSD_TAG=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep -oP '"tag_name": "\K[^"]+') || true
+    if [ -z "$LSD_TAG" ]; then
+      echo "Couldn't determine the latest lsd release (GitHub API unreachable or rate-limited) — skipping. Install manually from https://github.com/lsd-rs/lsd"
+    else
+      LSD_VER="${LSD_TAG#v}"
+      if wget -q "https://github.com/lsd-rs/lsd/releases/download/${LSD_TAG}/lsd_${LSD_VER}_${DEB_ARCH}.deb"; then
+        sudo dpkg -i "lsd_${LSD_VER}_${DEB_ARCH}.deb"
+      else
+        echo "Couldn't download lsd ${LSD_TAG} for ${DEB_ARCH} — skipping. Install manually from https://github.com/lsd-rs/lsd"
+      fi
+    fi
   }
 else
   echo "already installed, skipping"
@@ -100,7 +121,15 @@ fi
 
 echo "=== 6/6: superfile ==="
 if ! command -v spf &> /dev/null; then
-  bash -c "$(curl -sLo- https://superfile.dev/install.sh)"
+  # Same reasoning as the oh-my-posh step above: a bare `curl | bash` (or
+  # `bash -c "$(curl ...)"`) silently masks a failed fetch instead of
+  # tripping set -e, so download to a file and check it explicitly first.
+  if curl -fsSL https://superfile.dev/install.sh -o /tmp/superfile-install.sh && [ -s /tmp/superfile-install.sh ]; then
+    bash /tmp/superfile-install.sh || echo "Superfile's installer failed — skipping. Install manually from https://superfile.dev"
+    rm -f /tmp/superfile-install.sh
+  else
+    echo "Couldn't fetch the Superfile installer from superfile.dev — skipping. Install manually from https://superfile.dev once reachable."
+  fi
 else
   echo "already installed, skipping"
 fi

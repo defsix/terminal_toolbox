@@ -58,6 +58,16 @@ anyone who wants real zsh on Windows.
   recoverable, not fatal: it's rate-limited per IP, real on a shared
   mobile/carrier connection, and a bare `set -e` script dies silently with
   zero remaining steps run if the failure isn't checked explicitly.
+- Never pipe a vendor installer straight into `bash` (`curl ... | bash`, or
+  `bash -c "$(curl ...)"`) without checking the fetch on its own first. If
+  the fetch fails outright, `bash` gets an empty script and exits 0 — under
+  `set -e` that reads as success, so the step silently installs nothing
+  with zero indication anything went wrong. Worse, if whatever's in the
+  middle (a proxy, a captive portal) returns an error body over the
+  connection instead of failing cleanly, that body can get executed as
+  shell commands. Download to a file with `curl -fsSL ... -o file`, check
+  `[ -s file ]`, then run it — that way a failure is always visible and
+  never silently masked either way.
 
 ## Known gaps / open questions
 

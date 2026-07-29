@@ -145,3 +145,21 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   second run — executed for real, including genuinely downloading and
   running the real Android `posh-android-arm` binary and Linux `spf`
   binary produced by the fixes above.
+- **Fixed (both silent-death classes at once):** `setup-ubuntu.sh` piped
+  the oh-my-posh and Superfile installers straight into `bash`
+  (`curl ... | bash`, `bash -c "$(curl ...)"`) with no error handling.
+  Reproduced live against `ohmyposh.dev`/`superfile.dev` (blocked by this
+  environment's egress policy, which made for genuine failure-path
+  testing): when the fetch fails outright, `bash` gets an empty script and
+  exits 0 — under `set -e` that reads as success, so the step silently
+  installed nothing with no indication anything went wrong. In another
+  run, the proxy's rejection body got fed to `bash` as literal commands
+  (`bash: line 1: Host: command not found`), which did trip `set -e` and
+  silently killed the rest of the script instead. Both steps now download
+  to a file, check it explicitly, then run it — either failure mode now
+  produces a clear message and the script continues. Also fixed the same
+  unguarded-`api.github.com` issue in the `lsd` fallback (same bug as the
+  Termux fix above, same fix). Confirmed the actual vendor Superfile
+  installer (fetched from its GitHub mirror, not the blocked domain) still
+  installs correctly end-to-end when the fetch succeeds, using its
+  `SPF_INSTALL_VERSION` override to bypass just the API-lookup call.
