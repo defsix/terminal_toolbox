@@ -7,7 +7,7 @@ Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
 [tmux](https://github.com/tmux/tmux), and [Superfile](https://superfile.dev).
 
 Run one interactively and it opens with a picker — 10 Nerd Fonts, 7 themes
-(Dracula, Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest) —
+(Dracula, Catppuccin, JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn) —
 before anything installs. Piped/CI runs skip the prompt and keep the
 Dracula + JetBrainsMono defaults.
 
@@ -66,7 +66,9 @@ pick up changes.
 - 10 Nerd Fonts to choose from: JetBrainsMono, FiraCode, CascadiaCode, Hack,
   Meslo, SourceCodePro, Iosevka, UbuntuMono, RobotoMono, Inconsolata
 - 7 themes, applied consistently across every tool below: Dracula,
-  Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest
+  Catppuccin, JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn — all real
+  premade oh-my-posh prompts with genuine powerline color-bar segments,
+  not palette knockoffs
 - Oh My Posh drawing the prompt (Oh My Zsh's own theme is disabled so the
   two don't fight over the prompt)
 - lsd as a drop-in `ls` replacement (`ll`, `la`, `lt` aliases included)
@@ -80,23 +82,21 @@ pick up changes.
 ## Themes
 
 Real captures of the Oh My Posh prompt in each theme — same repo, same
-directory, only the `--config` file changed. Gruvbox is the official
-[gruvbox.omp.json](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/themes/gruvbox.omp.json)
-(its own segment layout); the rest share Dracula's/Catppuccin's segment
-layout, just recolored — see the picker note below for which is which.
+directory, only the `--config` file changed. Every theme here is a genuine
+premade upstream oh-my-posh theme (its own segment layout, its own colors)
+— none of these are palette knockoffs recolored onto someone else's
+template, so each one looks meaningfully different, not just retinted.
 
 | | |
 |---|---|
 | **Dracula**<br>![Dracula](docs/screenshots/prompt-dracula.png) | **Catppuccin**<br>![Catppuccin](docs/screenshots/prompt-catppuccin.png) |
-| **Gruvbox**<br>![Gruvbox](docs/screenshots/prompt-gruvbox.png) | **Nord**<br>![Nord](docs/screenshots/prompt-nord.png) |
-| **Tokyo Night**<br>![Tokyo Night](docs/screenshots/prompt-tokyonight.png) | **Rose Pine**<br>![Rose Pine](docs/screenshots/prompt-rosepine.png) |
-| **Everforest**<br>![Everforest](docs/screenshots/prompt-everforest.png) | |
+| **JanDeDobbeleer**<br>![JanDeDobbeleer](docs/screenshots/prompt-jandedobbeleer.png) | **Paradox**<br>![Paradox](docs/screenshots/prompt-paradox.png) |
+| **Aliens**<br>![Aliens](docs/screenshots/prompt-aliens.png) | **Montys**<br>![Montys](docs/screenshots/prompt-montys.png) |
+| **Unicorn**<br>![Unicorn](docs/screenshots/prompt-unicorn.png) | |
 
-Only Dracula, Catppuccin, and Gruvbox have an official upstream
-oh-my-posh theme with real powerline color-bar segments — Nord, Tokyo
-Night, Rose Pine, and Everforest are produced by recoloring Dracula's
-template with each theme's own palette (same layout, guaranteed to
-render, just repainted).
+bat/lsd/tmux/Superfile colors for each theme are derived from that same
+prompt's own segment colors, so the whole terminal matches whichever one
+you pick — not just the prompt line.
 
 ## Walkthrough
 
@@ -325,3 +325,33 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   fetches the real color-bar `.omp.json` and matching Macchiato bat/lsd/
   superfile/tmux config, and idempotency still holds (no duplicated
   marker blocks on a same-theme rerun).
+- **Replaced Gruvbox/Nord/Tokyo Night/Rose Pine/Everforest with 5 genuine
+  premade oh-my-posh themes** (JanDeDobbeleer, Paradox, Aliens, Montys,
+  Unicorn) after those 5 came back looking muddy and too similar to each
+  other next to Dracula and Catppuccin. The reason turned out to be
+  structural, not a color-picking mistake: Gruvbox, Nord, Rose Pine, and
+  Everforest are all, by deliberate design philosophy, muted/pastel/
+  low-saturation palettes — that's their actual aesthetic identity — so no
+  role-color reassignment within the recolor-Dracula's-template mechanism
+  could make them pop the way a genuinely vibrant theme does. Cloned
+  oh-my-posh's full themes directory (122 files) to check for real
+  alternatives: no Nord, Rose Pine, or Everforest theme exists upstream at
+  all, and the closest Tokyo Night-ish ones (`nordtron`, `tokyonight_storm`,
+  `tokyo`) use flat `"style": "plain"` segments, not color-bar ones either.
+  Picked 5 real, vibrant, complementary premade themes instead and derived
+  each one's bat/lsd/tmux/Superfile colors from that same theme's own
+  segment backgrounds, so the whole terminal matches whichever one is
+  picked — it just isn't "real Nord" anymore, by design.
+  - **Also discovered Superfile supports fully custom theme files, not
+    just its bundled names** (confirmed by dropping a hand-edited `.toml`
+    under a name Superfile never shipped, into `~/.config/superfile/theme/`
+    — it loaded without error: https://superfile.dev/configure/custom-theme/).
+    Every theme (including Dracula and Catppuccin, not just the 5 new ones)
+    now gets its own generated `~/.config/superfile/theme/<theme>.toml`
+    built from that theme's own role colors, replacing the old approach of
+    mapping to the closest bundled Superfile theme name by guesswork.
+  - Verified end-to-end on all three platforms: the real `.omp.json` for
+    each of the 5 new themes renders genuine powerline color-bar segments
+    (confirmed visually, not just JSON-inspected), the generated Superfile
+    `.toml` and lsd `colors.yaml` match each theme's palette, and
+    idempotency still holds.

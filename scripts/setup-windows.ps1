@@ -1,7 +1,8 @@
 # One-stop terminal setup for Windows (PowerShell)
 # oh-my-posh, Nerd Font, lsd, bat, fzf, zoxide, superfile — pick your font and
-# theme below (7 themes, all Dracula-style ecosystems: Dracula, Catppuccin,
-# Gruvbox, Nord, Tokyo Night, Rose Pine, Everforest).
+# theme below (7 themes, all real premade oh-my-posh prompts with genuine
+# powerline color-bar segments: Dracula, Catppuccin, JanDeDobbeleer, Paradox,
+# Aliens, Montys, Unicorn).
 #
 # Note: zsh / Oh My Zsh, and tmux, are Linux/macOS tools and don't run
 # natively on Windows. This script sets up the equivalent shell experience
@@ -17,7 +18,7 @@ $NerdFontName = "JetBrainsMono"   # default; the picker below can override this
 $Theme = "dracula"                # default; the picker below can override this
 
 $FontChoices = @("JetBrainsMono", "FiraCode", "CascadiaCode", "Hack", "Meslo", "SourceCodePro", "Iosevka", "UbuntuMono", "RobotoMono", "Inconsolata")
-$ThemeChoices = @("dracula", "catppuccin", "gruvbox", "nord", "tokyonight", "rosepine", "everforest")
+$ThemeChoices = @("dracula", "catppuccin", "jandedobbeleer", "paradox", "aliens", "montys", "unicorn")
 
 function Section($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }
 
@@ -57,14 +58,12 @@ if ([Environment]::UserInteractive -and -not ([Console]::IsInputRedirected)) {
 $OmpThemeUrl = ""
 $BatThemeName = ""
 $BatThemeUrl = ""
-$SuperfileTheme = ""
 $C = @{}
 
 switch ($Theme) {
   "dracula" {
     $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/dracula.omp.json"
     $BatThemeName = "Dracula"
-    $SuperfileTheme = "dracula"
     $C = @{ BG="#282a36"; FG="#f8f8f2"; MUTED="#6272a4"; PURPLE="#bd93f9"; ORANGE="#ffb86c"; CYAN="#8be9fd"; PINK="#ff79c6"; YELLOW="#f1fa8c"; RED="#ff5555"; GREEN="#50fa7b" }
   }
   "catppuccin" {
@@ -77,44 +76,42 @@ switch ($Theme) {
     $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin.omp.json"
     $BatThemeName = "Catppuccin Macchiato"
     $BatThemeUrl = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
-    $SuperfileTheme = "catppuccin-macchiato"
     $C = @{ BG="#24273a"; FG="#cad3f5"; MUTED="#6e738d"; PURPLE="#c6a0f6"; ORANGE="#f5a97f"; CYAN="#8bd5ca"; PINK="#f5bde6"; YELLOW="#eed49f"; RED="#ed8796"; GREEN="#a6da95" }
   }
-  "gruvbox" {
-    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/gruvbox.omp.json"
-    $BatThemeName = "gruvbox-dark"
-    $SuperfileTheme = "gruvbox"
-    $C = @{ BG="#282828"; FG="#ebdbb2"; MUTED="#928374"; PURPLE="#d3869b"; ORANGE="#fe8019"; CYAN="#8ec07c"; PINK="#d3869b"; YELLOW="#fabd2f"; RED="#fb4934"; GREEN="#b8bb26" }
+  "jandedobbeleer" {
+    # oh-my-posh's own flagship default theme — real powerline segments,
+    # well-tested, vibrant lavender/pink/yellow/teal.
+    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/jandedobbeleer.omp.json"
+    $BatThemeName = "Sublime Snazzy"
+    $C = @{ BG="#1a1b26"; FG="#c0caf5"; MUTED="#565f89"; PURPLE="#c386f1"; ORANGE="#f36943"; CYAN="#2e9599"; PINK="#ff479c"; YELLOW="#fffb38"; RED="#f7768e"; GREEN="#1bd760" }
   }
-  "nord" {
-    $BatThemeName = "Nord"
-    $SuperfileTheme = "nord"
-    $C = @{ BG="#2e3440"; FG="#d8dee9"; MUTED="#4c566a"; PURPLE="#b48ead"; ORANGE="#d08770"; CYAN="#88c0d0"; PINK="#bf616a"; YELLOW="#ebcb8b"; RED="#bf616a"; GREEN="#a3be8c" }
+  "paradox" {
+    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/paradox.omp.json"
+    $BatThemeName = "OneHalfDark"
+    $C = @{ BG="#1e1e2e"; FG="#cdd6f4"; MUTED="#6c7086"; PURPLE="#906cff"; ORANGE="#ffe9aa"; CYAN="#91ddff"; PINK="#ff8080"; YELLOW="#ffe9aa"; RED="#ff8080"; GREEN="#95ffa4" }
   }
-  "tokyonight" {
-    $BatThemeName = "tokyonight_night"
-    $BatThemeUrl = "https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme"
-    $SuperfileTheme = "tokyonight"
-    $C = @{ BG="#1a1b26"; FG="#c0caf5"; MUTED="#565f89"; PURPLE="#bb9af7"; ORANGE="#ff9e64"; CYAN="#7dcfff"; PINK="#bb9af7"; YELLOW="#e0af68"; RED="#f7768e"; GREEN="#9ece6a" }
+  "aliens" {
+    # Atom One Dark-inspired accents — bat's built-in TwoDark theme is the
+    # same palette family, so it's an authentic pairing, not just a guess.
+    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/aliens.omp.json"
+    $BatThemeName = "TwoDark"
+    $C = @{ BG="#282c34"; FG="#abb2bf"; MUTED="#5c6370"; PURPLE="#c678dd"; ORANGE="#e5c07b"; CYAN="#61afef"; PINK="#ff6471"; YELLOW="#e5c07b"; RED="#ff6471"; GREEN="#95ffa4" }
   }
-  "rosepine" {
-    $BatThemeName = "Rose Pine"
-    $BatThemeUrl = "https://raw.githubusercontent.com/rose-pine/tm-theme/main/dist/rose-pine.tmTheme"
-    $SuperfileTheme = "rose-pine"
-    $C = @{ BG="#191724"; FG="#e0def4"; MUTED="#6e6a86"; PURPLE="#c4a7e7"; ORANGE="#ebbcba"; CYAN="#9ccfd8"; PINK="#eb6f92"; YELLOW="#f6c177"; RED="#eb6f92"; GREEN="#31748f" }
+  "montys" {
+    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/montys.omp.json"
+    $BatThemeName = "Coldark-Dark"
+    $C = @{ BG="#22333b"; FG="#eae0d5"; MUTED="#5e6472"; PURPLE="#83769c"; ORANGE="#fca17d"; CYAN="#33658a"; PINK="#da627d"; YELLOW="#fca17d"; RED="#da627d"; GREEN="#76b367" }
   }
-  "everforest" {
-    $BatThemeName = "Everforest Dark"
-    $BatThemeUrl = "https://raw.githubusercontent.com/mhanberg/everforest-textmate/main/Everforest%20Dark/Everforest%20Dark.tmTheme"
-    $SuperfileTheme = "everforest-dark-medium"
-    $C = @{ BG="#2d353b"; FG="#d3c6aa"; MUTED="#7a8478"; PURPLE="#d699b6"; ORANGE="#e69875"; CYAN="#83c092"; PINK="#d699b6"; YELLOW="#dbbc7f"; RED="#e67e80"; GREEN="#a7c080" }
+  "unicorn" {
+    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/unicorn.omp.json"
+    $BatThemeName = "Monokai Extended"
+    $C = @{ BG="#0f2027"; FG="#d8e9eb"; MUTED="#4c6b73"; PURPLE="#83769c"; ORANGE="#d2ff5e"; CYAN="#0087d8"; PINK="#ff6f91"; YELLOW="#d2ff5e"; RED="#ff6f91"; GREEN="#d2ff5e" }
   }
   default {
     Write-Host "Unknown theme '$Theme' — falling back to dracula"
     $Theme = "dracula"
     $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/dracula.omp.json"
     $BatThemeName = "Dracula"
-    $SuperfileTheme = "dracula"
     $C = @{ BG="#282a36"; FG="#f8f8f2"; MUTED="#6272a4"; PURPLE="#bd93f9"; ORANGE="#ffb86c"; CYAN="#8be9fd"; PINK="#ff79c6"; YELLOW="#f1fa8c"; RED="#ff5555"; GREEN="#50fa7b" }
   }
 }
@@ -237,16 +234,70 @@ if (-not (Test-Path $SpfConfig) -and (Get-Command spf -ErrorAction SilentlyConti
   # (fine — we only care about the files it wrote before failing).
   spf --fix-config-file *> $null
 }
+# Superfile supports fully custom theme files (not just its bundled names) —
+# https://superfile.dev/configure/custom-theme/ — so write our own using this
+# theme's own role colors instead of guessing at the closest bundled name.
+$SpfThemeDir = "$env:APPDATA\superfile\theme"
+New-Item -ItemType Directory -Force -Path $SpfThemeDir | Out-Null
+@"
+code_syntax_highlight = "dracula"
+
+full_screen_fg = "$($C.FG)"
+full_screen_bg = "$($C.BG)"
+
+gradient_color = ["$($C.GREEN)", "$($C.RED)"]
+
+file_panel_fg = "$($C.FG)"
+file_panel_bg = "$($C.BG)"
+file_panel_border = "$($C.MUTED)"
+file_panel_border_active = "$($C.MUTED)"
+file_panel_top_directory_icon = "$($C.GREEN)"
+file_panel_top_path = "$($C.CYAN)"
+file_panel_item_selected_fg = "$($C.ORANGE)"
+file_panel_item_selected_bg = "$($C.BG)"
+
+footer_fg = "$($C.FG)"
+footer_bg = "$($C.BG)"
+footer_border = "$($C.MUTED)"
+footer_border_active = "$($C.MUTED)"
+
+sidebar_fg = "$($C.FG)"
+sidebar_bg = "$($C.BG)"
+sidebar_title = "$($C.PURPLE)"
+sidebar_border = "$($C.BG)"
+sidebar_border_active = "$($C.MUTED)"
+sidebar_item_selected_fg = "$($C.ORANGE)"
+sidebar_item_selected_bg = "$($C.BG)"
+sidebar_divider = "$($C.MUTED)"
+
+modal_fg = "$($C.FG)"
+modal_bg = "$($C.BG)"
+modal_border_active = "$($C.MUTED)"
+modal_cancel_fg = "$($C.FG)"
+modal_cancel_bg = "$($C.MUTED)"
+modal_confirm_fg = "$($C.FG)"
+modal_confirm_bg = "$($C.ORANGE)"
+
+help_menu_hotkey = "$($C.ORANGE)"
+help_menu_title = "$($C.PURPLE)"
+
+cursor = "$($C.PINK)"
+correct = "$($C.GREEN)"
+error = "$($C.RED)"
+hint = "$($C.CYAN)"
+cancel = "$($C.MUTED)"
+"@ | Set-Content -Path "$SpfThemeDir\$Theme.toml"
+
 if (Test-Path $SpfConfig) {
   $content = Get-Content $SpfConfig
   if ($content -match "^theme = ") {
-    $content = $content -replace "^theme = .*", "theme = `"$SuperfileTheme`""
+    $content = $content -replace "^theme = .*", "theme = `"$Theme`""
     Set-Content -Path $SpfConfig -Value $content
   } else {
-    Add-Content -Path $SpfConfig -Value "theme = `"$SuperfileTheme`""
+    Add-Content -Path $SpfConfig -Value "theme = `"$Theme`""
   }
 } else {
-  Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = `"$SuperfileTheme`" in its config.toml (run 'spf path-list' to find the exact path)."
+  Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = `"$Theme`" in its config.toml (run 'spf path-list' to find the exact path)."
 }
 
 Section "8/8: PowerShell profile"
