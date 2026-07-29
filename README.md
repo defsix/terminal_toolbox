@@ -106,3 +106,15 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   with [VHS](https://github.com/charmbracelet/vhs) using each tool's real
   Dracula theme/colors (Superfile's bundled `dracula.toml`, the official
   [dracula/lsd](https://github.com/dracula/lsd) `colors.yaml`).
+- **Fixed:** `setup-windows.ps1`'s PowerShell-profile step silently did
+  nothing on a genuinely fresh machine. `Get-Content -Raw` on a brand-new
+  `$PROFILE` returns `$null`, and `$null -notmatch <pattern>` evaluates to
+  an empty (falsy) array rather than `$true` — so the script always hit the
+  "profile already configured, skipping" branch and never actually wrote
+  the Oh My Posh/lsd config, while still reporting success. Found and fixed
+  by actually running the script end-to-end under PowerShell Core, with
+  `winget` mocked to wire up real oh-my-posh/lsd/superfile binaries so the
+  rest of the script's logic — theme download, config patch, profile
+  patch, and idempotency on a second run — executed for real. (`winget`
+  itself and Windows font installation can't be exercised outside real
+  Windows, so those two steps are still unverified beyond a syntax check.)

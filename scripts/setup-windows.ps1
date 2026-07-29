@@ -85,7 +85,11 @@ if (-not (Test-Path $PROFILE)) {
 }
 $Mark = "# >>> custom terminal setup >>>"
 $ProfileContent = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
-if ($ProfileContent -notmatch [regex]::Escape($Mark)) {
+# Get-Content -Raw on a brand-new/empty file returns $null, and $null -notmatch
+# <pattern> comes back as an empty array (falsy) rather than $true — so on a
+# fresh machine (no pre-existing profile) this would silently skip adding the
+# config below. Check for empty content explicitly first.
+if ([string]::IsNullOrEmpty($ProfileContent) -or $ProfileContent -notmatch [regex]::Escape($Mark)) {
 @"
 
 $Mark

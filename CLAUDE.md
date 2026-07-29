@@ -40,6 +40,12 @@ anyone who wants real zsh on Windows.
   in `.zshrc`.
 - ES5-equivalent shell style: plain POSIX/bash, no bashisms that would break
   under Termux's `bash`, no external dependencies beyond curl/wget/git/unzip.
+- PowerShell profile patch: never compare `Get-Content -Raw` output to a
+  pattern with bare `-notmatch`/`-match` — on a brand-new/empty file it
+  returns `$null`, and `$null -notmatch <pattern>` comes back as an empty
+  array (falsy in an `if`), not `$true`. Always guard with
+  `[string]::IsNullOrEmpty($content) -or ...` first, or a fresh `$PROFILE`
+  silently skips getting configured while the script reports success.
 
 ## Known gaps / open questions
 
