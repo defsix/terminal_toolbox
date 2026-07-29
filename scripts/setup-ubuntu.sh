@@ -29,12 +29,29 @@ if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
   git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
     "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 fi
-if [ -f "$HOME/.zshrc" ] && grep -q "^plugins=(git)$" "$HOME/.zshrc"; then
-  sed -i 's/^plugins=(git)$/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
-fi
-# oh-my-posh (below) draws the prompt, so the Oh My Zsh theme is just dead weight if left on.
-if [ -f "$HOME/.zshrc" ]; then
+if [ -f "$HOME/.zshrc" ] && grep -q "oh-my-zsh.sh" "$HOME/.zshrc"; then
+  # Oh My Zsh's own template is present (fresh install) — patch its lines directly.
+  if grep -q "^plugins=(git)$" "$HOME/.zshrc"; then
+    sed -i 's/^plugins=(git)$/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
+  fi
+  # oh-my-posh (below) draws the prompt, so the Oh My Zsh theme is just dead weight if left on.
   sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/' "$HOME/.zshrc"
+elif [ -f "$HOME/.zshrc" ]; then
+  # KEEP_ZSHRC left an existing .zshrc untouched, so Oh My Zsh was never
+  # actually wired in (no `source .../oh-my-zsh.sh` line) — bootstrap it
+  # ourselves instead of silently no-op'ing the plugin patches above.
+  MARK_OMZ="# >>> custom terminal setup (oh-my-zsh) >>>"
+  if ! grep -qF "$MARK_OMZ" "$HOME/.zshrc"; then
+    cat >> "$HOME/.zshrc" << EOF
+
+$MARK_OMZ
+export ZSH="\$HOME/.oh-my-zsh"
+ZSH_THEME=""
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+source "\$ZSH/oh-my-zsh.sh"
+# <<< custom terminal setup (oh-my-zsh) <<<
+EOF
+  fi
 fi
 
 echo "=== 3/6: Nerd Font ($NERD_FONT_NAME) ==="
@@ -92,18 +109,19 @@ echo "--- setting superfile theme to Dracula ---"
 SPF_CONFIG_DIR="$HOME/.config/superfile"
 SPF_CONFIG="$SPF_CONFIG_DIR/config.toml"
 if [ ! -f "$SPF_CONFIG" ]; then
-  # First run generates the default config files; path-list is a no-op
-  # command that still triggers config initialization.
-  spf path-list >/dev/null 2>&1 || true
+  # --fix-config-file writes the default config/hotkeys files as a side
+  # effect, then exits non-zero because there's no TTY to open the TUI in
+  # (fine — we only care about the files it wrote before failing).
+  spf --fix-config-file >/dev/null 2>&1 || true
 fi
 if [ -f "$SPF_CONFIG" ]; then
   if grep -q "^theme = " "$SPF_CONFIG"; then
-    sed -i "s/^theme = .*/theme = 'dracula'/" "$SPF_CONFIG"
+    sed -i 's/^theme = .*/theme = "dracula"/' "$SPF_CONFIG"
   else
-    echo "theme = 'dracula'" >> "$SPF_CONFIG"
+    echo 'theme = "dracula"' >> "$SPF_CONFIG"
   fi
 else
-  echo "Couldn't find/generate $SPF_CONFIG — run 'spf' once yourself, then set theme = 'dracula' in it."
+  echo "Couldn't find/generate $SPF_CONFIG — run 'spf' once yourself, then set theme = \"dracula\" in it."
 fi
 
 echo "=== configuring .zshrc ==="

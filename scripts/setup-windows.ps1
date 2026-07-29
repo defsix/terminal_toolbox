@@ -62,20 +62,21 @@ if (-not (Get-Command spf -ErrorAction SilentlyContinue)) {
 Write-Host "--- setting superfile theme to Dracula ---"
 $SpfConfig = "$env:APPDATA\superfile\config.toml"
 if (-not (Test-Path $SpfConfig) -and (Get-Command spf -ErrorAction SilentlyContinue)) {
-  # First run generates the default config files; path-list is a no-op
-  # command that still triggers config initialization.
-  spf path-list *> $null
+  # --fix-config-file writes the default config/hotkeys files as a side
+  # effect, then exits non-zero because there's no TTY to open the TUI in
+  # (fine — we only care about the files it wrote before failing).
+  spf --fix-config-file *> $null
 }
 if (Test-Path $SpfConfig) {
   $content = Get-Content $SpfConfig
   if ($content -match "^theme = ") {
-    $content = $content -replace "^theme = .*", "theme = 'dracula'"
+    $content = $content -replace "^theme = .*", 'theme = "dracula"'
     Set-Content -Path $SpfConfig -Value $content
   } else {
-    Add-Content -Path $SpfConfig -Value "theme = 'dracula'"
+    Add-Content -Path $SpfConfig -Value 'theme = "dracula"'
   }
 } else {
-  Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = 'dracula' in its config.toml (run 'spf path-list' to find the exact path)."
+  Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = `"dracula`" in its config.toml (run 'spf path-list' to find the exact path)."
 }
 
 Section "5/5: PowerShell profile"
