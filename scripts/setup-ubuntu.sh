@@ -166,7 +166,6 @@ alias ls='lsd'
 alias ll='lsd -l'
 alias la='lsd -la'
 alias lt='lsd --tree'
-alias spf='spf'
 # <<< custom terminal setup <<<
 EOF
 else

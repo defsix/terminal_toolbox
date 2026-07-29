@@ -163,3 +163,10 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   installer (fetched from its GitHub mirror, not the blocked domain) still
   installs correctly end-to-end when the fetch succeeds, using its
   `SPF_INSTALL_VERSION` override to bypass just the API-lookup call.
+- **Final cross-platform re-verification pass**, run after all of the above
+  fixes landed: all three scripts re-run fresh end-to-end (isolated
+  `$HOME`/`$PREFIX`/`$env:APPDATA` and mocked package managers/`winget`, as
+  described above) and again for idempotency, confirming every earlier fix
+  still holds together as a whole and nothing regressed. Turned up one
+  small leftover: a dead `alias spf='spf'` (aliasing a command to itself)
+  in `setup-ubuntu.sh`'s `.zshrc` block — removed.
