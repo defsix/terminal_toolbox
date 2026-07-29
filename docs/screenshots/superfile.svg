@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" font-family="JetBrains Mono, Menlo, Consolas, monospace" font-size="14">
+  <rect width="760" height="320" rx="10" fill="#282a36"/>
+  <rect x="0" y="0" width="760" height="34" rx="10" fill="#1e1f29"/>
+  <circle cx="22" cy="17" r="6" fill="#ff5555"/>
+  <circle cx="44" cy="17" r="6" fill="#f1fa8c"/>
+  <circle cx="66" cy="17" r="6" fill="#50fa7b"/>
+  <text x="380" y="22" fill="#6272a4" text-anchor="middle" font-size="13">spf — superfile (dracula)</text>
+
+  <!-- sidebar -->
+  <rect x="16" y="46" width="160" height="258" rx="6" fill="none" stroke="#bd93f9" stroke-width="1.5"/>
+  <text x="28" y="66" fill="#bd93f9" font-weight="bold">Locations</text>
+  <text x="28" y="92" fill="#8be9fd">  Home</text>
+  <text x="28" y="114" fill="#f8f8f2">  Downloads</text>
+  <text x="28" y="136" fill="#f8f8f2">  Projects</text>
+  <text x="28" y="158" fill="#f1fa8c">  terminal-setup</text>
+
+  <!-- file list -->
+  <rect x="188" y="46" width="330" height="258" rx="6" fill="none" stroke="#50fa7b" stroke-width="1.5"/>
+  <text x="200" y="66" fill="#50fa7b" font-weight="bold">terminal-setup/</text>
+  <rect x="196" y="76" width="314" height="22" fill="#44475a"/>
+  <text x="204" y="92" fill="#f8f8f2">  CLAUDE.md</text>
+  <text x="204" y="114" fill="#f8f8f2">  README.md</text>
+  <text x="204" y="136" fill="#bd93f9" font-weight="bold">  scripts/</text>
+  <text x="204" y="158" fill="#f8f8f2">  docs/</text>
+
+  <!-- preview -->
+  <rect x="530" y="46" width="214" height="258" rx="6" fill="none" stroke="#ff79c6" stroke-width="1.5"/>
+  <text x="542" y="66" fill="#ff79c6" font-weight="bold">Preview</text>
+  <text x="542" y="92" fill="#6272a4"># terminal-setup</text>
+  <text x="542" y="114" fill="#f8f8f2">One-stop scripts to</text>
+  <text x="542" y="132" fill="#f8f8f2">provision a terminal</text>
+  <text x="542" y="150" fill="#f8f8f2">with zsh, a Nerd Font,</text>
+  <text x="542" y="168" fill="#f8f8f2">Oh My Posh, lsd and</text>
+  <text x="542" y="186" fill="#f8f8f2">Superfile.</text>
+
+  <rect x="16" y="292" width="728" height="1" fill="#44475a"/>
+  <text x="28" y="0" fill="#6272a4"></text>
+</svg>

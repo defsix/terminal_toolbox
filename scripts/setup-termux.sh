@@ -18,6 +18,24 @@ else
   echo "already installed, skipping"
 fi
 
+echo "--- Oh My Zsh plugins (zsh-autosuggestions, zsh-syntax-highlighting) ---"
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
+  git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
+    "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+fi
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
+  git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
+    "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+fi
+if [ -f "$HOME/.zshrc" ] && grep -q "^plugins=(git)$" "$HOME/.zshrc"; then
+  sed -i 's/^plugins=(git)$/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
+fi
+# oh-my-posh (below) draws the prompt, so the Oh My Zsh theme is just dead weight if left on.
+if [ -f "$HOME/.zshrc" ]; then
+  sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/' "$HOME/.zshrc"
+fi
+
 echo "=== 3/6: Nerd Font ($NERD_FONT_NAME) ==="
 # Termux doesn't use fontconfig — a single ~/.termux/font.ttf is the terminal font.
 mkdir -p "$HOME/.termux"
