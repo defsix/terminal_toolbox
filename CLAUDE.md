@@ -1,7 +1,8 @@
 # terminal-setup
 
 One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
-lsd, and Superfile — all wired to the **Dracula** theme.
+lsd, bat, fzf, zoxide, tmux, and Superfile — all wired to the **Dracula**
+theme (tmux is Linux/Termux only — no native Windows port).
 
 ## Platforms
 
@@ -68,6 +69,25 @@ anyone who wants real zsh on Windows.
   shell commands. Download to a file with `curl -fsSL ... -o file`, check
   `[ -s file ]`, then run it — that way a failure is always visible and
   never silently masked either way.
+- bat: Debian/Ubuntu ships the binary as `batcat` (name conflict with an
+  older `bacula-console` package), so scripts check for both `bat` and
+  `batcat` and alias `bat='batcat'` in `.zshrc` when only the latter exists.
+  Dracula is one of bat's *built-in* themes — no external theme file to
+  fetch, just `export BAT_THEME="Dracula"`.
+- fzf: don't hand-roll per-distro shell-integration detection (Debian/apt's
+  doc-examples path vs. Termux's `$PREFIX` path vs. the newer `fzf --zsh`
+  flag — Ubuntu 24.04's apt-packaged fzf (0.44.1) predates that flag
+  entirely). Add `fzf` to the Oh My Zsh `plugins=(...)` line instead —
+  its bundled `fzf` plugin already covers all of the above. Dracula colors
+  still need setting manually: `FZF_DEFAULT_OPTS` per the official
+  `dracula/fzf` install docs.
+- tmux: dracula/tmux is installed by git-cloning the theme repo directly to
+  `~/.tmux/plugins/dracula` and adding a single `run-shell
+  <absolute-path>/dracula.tmux` line to `.tmux.conf` — no TPM (tmux plugin
+  manager) needed, which would require an interactive `prefix + I` step
+  this repo can't script non-interactively anyway.
+- zoxide: `zoxide init zsh` / `zoxide init powershell`, both first-party
+  and stable — no version-compatibility concerns like fzf's `--zsh` flag.
 
 ## Known gaps / open questions
 
@@ -82,6 +102,14 @@ anyone who wants real zsh on Windows.
   under Termux in the past (see `posh-android-*` binaries used as the
   fallback) — if it breaks, check the JanDeDobbeleer/oh-my-posh GitHub
   discussions for the current state.
+- On a minimized/`nodoc`-stripped Ubuntu (apt configured with
+  `path-exclude=/usr/share/doc/*`, common in slim Docker base images but
+  not a real Desktop/Pi install), Oh My Zsh's `fzf` plugin can't find
+  `/usr/share/doc/fzf/examples/*.zsh` since those files get stripped at
+  install time even though `dpkg -L fzf` still lists them. Harmless — the
+  rest of `.zshrc` still loads fine, fzf's key bindings/completion just
+  don't get wired up — but worth knowing if this is ever run inside a slim
+  container rather than a real machine.
 
 ## Owner context
 

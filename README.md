@@ -2,7 +2,9 @@
 
 One-stop scripts to provision a terminal with zsh (or PowerShell), a Nerd
 Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
-[lsd](https://github.com/lsd-rs/lsd), and [Superfile](https://superfile.dev)
+[lsd](https://github.com/lsd-rs/lsd), [bat](https://github.com/sharkdp/bat),
+[fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
+[tmux](https://github.com/tmux/tmux), and [Superfile](https://superfile.dev)
 — themed in Dracula throughout.
 
 > Screenshots below are real captures, not mockups: taken by actually running
@@ -43,6 +45,11 @@ pick up changes.
 - Oh My Posh, Dracula theme, drawing the prompt (Oh My Zsh's own theme is
   disabled so the two don't fight over the prompt)
 - lsd as a drop-in `ls` replacement (`ll`, `la`, `lt` aliases included)
+- bat (`cat` replacement) with its built-in Dracula theme, aliased over `cat`
+- fzf, fuzzy search wired into Oh My Zsh (history search, file/completion
+  widgets) via its bundled `fzf` plugin, Dracula colors via `FZF_DEFAULT_OPTS`
+- zoxide, a learning `cd` — `z`/`zi` jump to frecently-used directories
+- tmux, Dracula theme (Linux/Termux only — no native Windows port; use WSL)
 - Superfile (`spf`), Dracula theme
 
 ## Walkthrough
@@ -68,12 +75,25 @@ pick up changes.
 
    ![lsd -la, Dracula colors](docs/screenshots/lsd-dracula.png)
 
-4. **Superfile.** Launch the TUI file manager with `spf` — it opens with
+4. **bat / fzf / zoxide.** `cat` resolves to `bat` (Dracula is one of its
+   built-in themes — no extra theme install needed there), `Ctrl+R`/tab
+   completion get fzf's fuzzy picker (Dracula colors via `FZF_DEFAULT_OPTS`,
+   wired in through Oh My Zsh's own `fzf` plugin so it finds the right
+   integration files regardless of platform), and `z <partial-name>` jumps
+   to a frecently-used directory via zoxide.
+
+5. **tmux.** Start a session with `tmux` — the status bar comes up
+   Dracula-themed immediately, no `prefix + I` plugin-manager step needed
+   (the theme is cloned in directly by the script):
+
+   ![tmux, Dracula theme](docs/screenshots/tmux-dracula.png)
+
+6. **Superfile.** Launch the TUI file manager with `spf` — it opens with
    the `dracula` theme already set in its `config.toml`:
 
    ![Superfile, Dracula theme](docs/screenshots/superfile-dracula.png)
 
-5. **Re-running is safe.** Every step is guarded by an existence check
+7. **Re-running is safe.** Every step is guarded by an existence check
    (directory, binary, or config line), so re-running after a failed step,
    or to pick up a new version of the script, only does the work that's
    still missing.
@@ -170,3 +190,23 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   still holds together as a whole and nothing regressed. Turned up one
   small leftover: a dead `alias spf='spf'` (aliasing a command to itself)
   in `setup-ubuntu.sh`'s `.zshrc` block — removed.
+- **Added bat, fzf, zoxide, and tmux** (Linux/Termux only for tmux — no
+  native Windows port) to all three scripts, each idempotent and
+  Dracula-themed: bat via its own built-in "Dracula" theme, fzf via the
+  official `dracula/fzf` `FZF_DEFAULT_OPTS` colors and wired into zsh
+  through Oh My Zsh's bundled `fzf` plugin (rather than hand-rolling
+  per-distro shell-integration path detection — it already knows the
+  Debian/apt doc-examples path, Termux's `$PREFIX` path, and the modern
+  `fzf --zsh` flag), zoxide via `zoxide init`, and tmux via the official
+  `dracula/tmux` plugin cloned directly (no plugin-manager step needed).
+  Verified fresh-install and idempotent-rerun for all three platforms,
+  including a genuine `apt remove` of all four tools beforehand so the
+  install branches actually ran rather than short-circuiting on
+  already-present binaries; confirmed the real Dracula colors in `tmux`'s
+  status bar (`show-options -g status-style`) and bat's `--list-themes`
+  output. One real, environment-specific gap found along the way: a
+  minimized/`nodoc`-stripped Ubuntu (common in slim Docker base images,
+  not a real Desktop/Pi install — this repo's actual target) is missing
+  `/usr/share/doc/fzf/examples/*.zsh`, which the Oh My Zsh `fzf` plugin
+  needs on Debian/Ubuntu; harmless (the rest of the shell still loads
+  fine) but worth knowing if this is ever run inside a slim container.

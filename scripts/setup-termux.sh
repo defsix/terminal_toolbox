@@ -1,16 +1,17 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # One-stop terminal setup for Termux (Android)
-# zsh + oh-my-zsh, Nerd Font, oh-my-posh (Dracula), lsd, superfile (Dracula)
+# zsh + oh-my-zsh, Nerd Font, oh-my-posh (Dracula), lsd, bat, fzf, zoxide,
+# tmux (Dracula), superfile (Dracula)
 # Usage: bash setup-termux.sh
 set -e
 
 NERD_FONT_NAME="JetBrainsMono"   # change if you prefer Meslo, FiraCode, Hack, etc.
 
-echo "=== 1/6: base packages ==="
+echo "=== 1/10: base packages ==="
 pkg update -y
 pkg install -y zsh curl wget git unzip
 
-echo "=== 2/6: Oh My Zsh ==="
+echo "=== 2/10: Oh My Zsh ==="
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c \
     "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -18,7 +19,7 @@ else
   echo "already installed, skipping"
 fi
 
-echo "--- Oh My Zsh plugins (zsh-autosuggestions, zsh-syntax-highlighting) ---"
+echo "--- Oh My Zsh plugins (zsh-autosuggestions, zsh-syntax-highlighting, fzf) ---"
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
   git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
@@ -31,7 +32,7 @@ fi
 if [ -f "$HOME/.zshrc" ] && grep -q "oh-my-zsh.sh" "$HOME/.zshrc"; then
   # Oh My Zsh's own template is present (fresh install) — patch its lines directly.
   if grep -q "^plugins=(git)$" "$HOME/.zshrc"; then
-    sed -i 's/^plugins=(git)$/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
+    sed -i 's/^plugins=(git)$/plugins=(git zsh-autosuggestions zsh-syntax-highlighting fzf)/' "$HOME/.zshrc"
   fi
   # oh-my-posh (below) draws the prompt, so the Oh My Zsh theme is just dead weight if left on.
   sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/' "$HOME/.zshrc"
@@ -46,14 +47,14 @@ elif [ -f "$HOME/.zshrc" ]; then
 $MARK_OMZ
 export ZSH="\$HOME/.oh-my-zsh"
 ZSH_THEME=""
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting fzf)
 source "\$ZSH/oh-my-zsh.sh"
 # <<< custom terminal setup (oh-my-zsh) <<<
 EOF
   fi
 fi
 
-echo "=== 3/6: Nerd Font ($NERD_FONT_NAME) ==="
+echo "=== 3/10: Nerd Font ($NERD_FONT_NAME) ==="
 # Termux doesn't use fontconfig — a single ~/.termux/font.ttf is the terminal font.
 mkdir -p "$HOME/.termux"
 if [ ! -f "$HOME/.termux/font.ttf" ]; then
@@ -69,7 +70,7 @@ else
   echo "already installed, skipping"
 fi
 
-echo "=== 4/6: oh-my-posh ==="
+echo "=== 4/10: oh-my-posh ==="
 if ! command -v oh-my-posh &> /dev/null; then
   pkg install -y oh-my-posh || {
     echo "termux package unavailable, falling back to GitHub binary"
@@ -100,14 +101,62 @@ else
   echo "already present, skipping"
 fi
 
-echo "=== 5/6: lsd ==="
+echo "=== 5/10: lsd ==="
 if ! command -v lsd &> /dev/null; then
   pkg install -y lsd
 else
   echo "already installed, skipping"
 fi
 
-echo "=== 6/6: superfile ==="
+echo "=== 6/10: bat ==="
+if ! command -v bat &> /dev/null && ! command -v batcat &> /dev/null; then
+  pkg install -y bat
+else
+  echo "already installed, skipping"
+fi
+
+echo "=== 7/10: fzf ==="
+if ! command -v fzf &> /dev/null; then
+  pkg install -y fzf
+else
+  echo "already installed, skipping"
+fi
+
+echo "=== 8/10: zoxide ==="
+if ! command -v zoxide &> /dev/null; then
+  pkg install -y zoxide
+else
+  echo "already installed, skipping"
+fi
+
+echo "=== 9/10: tmux ==="
+if ! command -v tmux &> /dev/null; then
+  pkg install -y tmux
+else
+  echo "already installed, skipping"
+fi
+
+echo "--- fetching Dracula theme for tmux ---"
+TMUX_DRACULA_DIR="$HOME/.tmux/plugins/dracula"
+if [ ! -d "$TMUX_DRACULA_DIR" ]; then
+  git clone --depth=1 https://github.com/dracula/tmux "$TMUX_DRACULA_DIR"
+else
+  echo "already present, skipping"
+fi
+TMUX_CONF="$HOME/.tmux.conf"
+TMUX_MARK="# >>> custom terminal setup >>>"
+if ! grep -qF "$TMUX_MARK" "$TMUX_CONF" 2>/dev/null; then
+  cat >> "$TMUX_CONF" << EOF
+
+$TMUX_MARK
+run-shell $TMUX_DRACULA_DIR/dracula.tmux
+# <<< custom terminal setup <<<
+EOF
+else
+  echo ".tmux.conf already configured, skipping"
+fi
+
+echo "=== 10/10: superfile ==="
 if ! command -v spf &> /dev/null; then
   ARCH=$(uname -m)
   case "$ARCH" in
@@ -166,11 +215,20 @@ if ! grep -qF "$MARK" "$HOME/.zshrc" 2>/dev/null; then
 
 $MARK
 eval "\$(oh-my-posh init zsh --config \$HOME/.poshthemes/dracula.omp.json)"
+eval "\$(zoxide init zsh)"
 
 alias ls='lsd'
 alias ll='lsd -l'
 alias la='lsd -la'
 alias lt='lsd --tree'
+
+if ! command -v bat &> /dev/null && command -v batcat &> /dev/null; then
+  alias bat='batcat'
+fi
+export BAT_THEME="Dracula"
+alias cat='bat'
+
+export FZF_DEFAULT_OPTS='--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9 --color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9 --color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6 --color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4'
 # <<< custom terminal setup <<<
 EOF
 else
@@ -190,4 +248,9 @@ All done. Next steps:
   4. If oh-my-posh or superfile weren't available as Termux packages on your
      device/architecture, the script fell back to a GitHub binary — if that
      also failed, check https://ohmyposh.dev and https://superfile.dev manually.
+  5. bat is set to the Dracula theme (`cat` is aliased to it); fzf uses the
+     Dracula palette via FZF_DEFAULT_OPTS; zoxide replaces `cd` habits with
+     `z`/`zi` (learns your most-used directories).
+  6. tmux is set to the Dracula theme (~/.tmux.conf) — start a session with
+     tmux, prefix + I is not needed since the theme's already cloned in.
 EOF
