@@ -2,9 +2,10 @@
 
 One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
 lsd, bat, fzf, zoxide, tmux, and Superfile. Run interactively, each script
-opens with a picker for one of 10 Nerd Fonts and one of 7 themes (Dracula,
-Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn — all genuine
-premade oh-my-posh prompts, not palette knockoffs) before anything installs;
+opens with a picker for one of 10 Nerd Fonts and one of 8 themes (Dracula,
+M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
+Marcduiker, Neko — all genuine premade oh-my-posh prompts fetched
+unmodified from upstream) before anything installs;
 non-interactive/CI runs keep the Dracula + JetBrainsMono defaults (tmux is
 Linux/Termux only — no native Windows port).
 
@@ -31,7 +32,7 @@ anyone who wants real zsh on Windows.
   when actually interactive — `[ -t 0 ]` in bash, `[Environment]::UserInteractive
   -and -not ([Console]::IsInputRedirected)` in PowerShell — so piped/CI runs
   silently keep the Dracula + JetBrainsMono defaults instead of hanging on a
-  read. All 7 themes and 10 fonts are plain arrays up top
+  read. All 8 themes and 10 fonts are plain arrays up top
   (`THEME_CHOICES`/`FONT_CHOICES` in bash, `$ThemeChoices`/`$FontChoices` in
   PowerShell) so adding one is a one-line change plus a new `case`/`switch` arm.
 - Theme data table: each theme is one `case "$THEME" in ... esac` arm (bash)
@@ -42,9 +43,12 @@ anyone who wants real zsh on Windows.
   asset exists. Switching the installed theme is "edit `$THEME`, rerun the
   script" — every managed config block is regenerated from scratch each run
   (see the strip-and-reappend note below), not hand-edited in place.
-- Oh My Posh theme: every one of the 7 themes is a genuine premade upstream
-  `.omp.json` fetched as-is (Dracula, Catppuccin, Atomic, Paradox,
-  Aliens, Montys, Unicorn) — none are recolored from a template. Earlier
+- Oh My Posh theme: every one of the 8 themes is a genuine premade upstream
+  `.omp.json` fetched as-is (Dracula, M365Princess, Atomic, Catppuccin,
+  Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko) — none are recolored
+  from a template, no exceptions (see the theme-roster bullet further down
+  for the current exact list and how each one's role colors were sourced).
+  Earlier
   versions of this repo recolored Dracula's template with Nord/Tokyo
   Night/Rose Pine/Everforest's real ecosystem palettes, which technically
   matched those palettes but looked muddy and too similar to each other:
@@ -99,6 +103,50 @@ anyone who wants real zsh on Windows.
   `raw.githubusercontent.com` file fetches for known theme filenames still
   work fine — that's how every theme file in this repo is actually fetched
   anyway.
+- **Current theme roster (8, explicitly specified by the repo owner, not
+  picked by Claude):** Dracula, M365Princess, Atomic, Catppuccin, Catppuccin
+  Mocha, JanDeDobbeleer, Marcduiker, Neko — replacing Paradox/Aliens/Montys/
+  Unicorn entirely (dropped, not kept alongside). Every `OMP_THEME_URL`
+  points at the theme's real, current `.omp.json` on
+  `JanDeDobbeleer/oh-my-posh` main, fetched unmodified — including
+  Catppuccin Mocha (a genuine per-flavor file, flat `"style": "plain"`, no
+  pill segments — see the Catppuccin bullet above; this isn't a bug to
+  "fix" the way the general Catppuccin pick already was) and Neko (an
+  emoji/plain-text novelty theme with no powerline/diamond segments at
+  all). Where a theme declares colors through a named `palette` block
+  (`p:name` references resolved elsewhere in the JSON) instead of inline
+  hex — M365Princess, Catppuccin, Catppuccin Mocha — the real hex values
+  were read from that file's own palette table, plus (for both Catppuccin
+  flavors) the rest of the well-known official Catppuccin palette for
+  roles the file's own small palette object doesn't cover. Every other
+  `C_*`/`L_*` role color was cross-checked against the theme's actual
+  fetched JSON — not just `background`/`foreground` fields but inline hex
+  embedded in `template`/`background_templates`/`leading_diamond` strings
+  too (e.g. Neko's `<#5FAAE8>` git-bracket color, easy to miss with a naive
+  field-only scan) — and only invented where a role has no real equivalent
+  in that specific theme at all (an overall background/foreground, for
+  prompt-only themes that don't define one; a hue like purple or green
+  that a small/minimalist palette like Marcduiker's or Neko's simply
+  doesn't have — invented ones were picked to harmonize with the theme's
+  actual family, e.g. Marcduiker's invented green matches real Sweetie-16-
+  style retro-palette greens even though it's not literally in that file).
+  `BAT_THEME_NAME` picks were verified against a real `bat --list-themes`
+  output, not assumed: `1337`, `Visual Studio Dark+`, `Sublime Snazzy`,
+  `gruvbox-dark`, `Nord` are all real built-in names. Catppuccin Mocha
+  gets the same official-asset treatment as Macchiato — a real
+  `catppuccin/bat` `Catppuccin Mocha.tmTheme` fetch, not a built-in
+  approximation. Screenshots for all 8 were regenerated the same way as
+  the Atomic swap (ttyd + Playwright), rendering the shell's very first
+  prompt line (no command run, no Enter pressed) rather than pressing
+  Enter first — pressing Enter re-renders the whole prompt a second time
+  immediately below the first with no blank row between them for several
+  of these themes, so a naive "first contiguous content block" crop
+  grabbed both lines as one. Fixed by cropping a fixed one-line-height
+  window (23px at the fontSize/font used here) from the first content row
+  instead, verified against each theme's actual per-row pixel density
+  (a real second line still has some content — the input cursor block —
+  just much lower density, not zero, so a pure blank-row gap check alone
+  doesn't reliably separate the two lines either).
 - lsd theme: **numeric xterm-256 color indices only** — Debian/Ubuntu's
   apt-packaged lsd (1.0.0) silently ignores hex color strings in
   `colors.yaml` even though upstream `dracula/lsd` and `catppuccin/lsd`

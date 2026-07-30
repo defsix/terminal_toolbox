@@ -6,10 +6,10 @@ Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
 [fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
 [tmux](https://github.com/tmux/tmux), and [Superfile](https://superfile.dev).
 
-Run one interactively and it opens with a picker — 10 Nerd Fonts, 7 themes
-(Dracula, Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn) —
-before anything installs. Piped/CI runs skip the prompt and keep the
-Dracula + JetBrainsMono defaults.
+Run one interactively and it opens with a picker — 10 Nerd Fonts, 8 themes
+(Dracula, M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
+Marcduiker, Neko) — before anything installs. Piped/CI runs skip the prompt
+and keep the Dracula + JetBrainsMono defaults.
 
 > Screenshots below are real captures, not mockups: taken by actually running
 > `scripts/setup-ubuntu.sh` end-to-end, then recording the resulting shell
@@ -70,10 +70,10 @@ pick up changes.
   script replaces its managed config instead of duplicating it.
 - 10 Nerd Fonts to choose from: JetBrainsMono, FiraCode, CascadiaCode, Hack,
   Meslo, SourceCodePro, Iosevka, UbuntuMono, RobotoMono, Inconsolata
-- 7 themes, applied consistently across every tool below: Dracula,
-  Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn — all real
-  premade oh-my-posh prompts with genuine powerline color-bar segments,
-  not palette knockoffs
+- 8 themes, applied consistently across every tool below: Dracula,
+  M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
+  Marcduiker, Neko — all real premade oh-my-posh prompts fetched
+  unmodified from upstream, not palette knockoffs
 - Oh My Posh drawing the prompt (Oh My Zsh's own theme is disabled so the
   two don't fight over the prompt)
 - lsd as a drop-in `ls` replacement (`ll`, `la`, `lt` aliases included)
@@ -88,16 +88,21 @@ pick up changes.
 
 Real captures of the Oh My Posh prompt in each theme — same repo, same
 directory, only the `--config` file changed. Every theme here is a genuine
-premade upstream oh-my-posh theme (its own segment layout, its own colors)
+premade upstream oh-my-posh theme fetched as-is, unmodified, straight from
+[JanDeDobbeleer/oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh/tree/main/themes)
 — none of these are palette knockoffs recolored onto someone else's
-template, so each one looks meaningfully different, not just retinted.
+template, so each one looks meaningfully different, not just retinted. That
+also means the pill/powerline segment look isn't universal: Catppuccin
+Mocha and Neko are just as genuine upstream, unmodified — they're flat
+plain-text prompts by design, and this repo doesn't force a pill style onto
+themes that were never built with one.
 
 | | |
 |---|---|
-| **Dracula**<br>![Dracula](docs/screenshots/prompt-dracula.png) | **Catppuccin**<br>![Catppuccin](docs/screenshots/prompt-catppuccin.png) |
-| **Atomic**<br>![Atomic](docs/screenshots/prompt-atomic.png) | **Paradox**<br>![Paradox](docs/screenshots/prompt-paradox.png) |
-| **Aliens**<br>![Aliens](docs/screenshots/prompt-aliens.png) | **Montys**<br>![Montys](docs/screenshots/prompt-montys.png) |
-| **Unicorn**<br>![Unicorn](docs/screenshots/prompt-unicorn.png) | |
+| **Dracula**<br>![Dracula](docs/screenshots/prompt-dracula.png) | **M365Princess**<br>![M365Princess](docs/screenshots/prompt-m365princess.png) |
+| **Atomic**<br>![Atomic](docs/screenshots/prompt-atomic.png) | **Catppuccin**<br>![Catppuccin](docs/screenshots/prompt-catppuccin.png) |
+| **Catppuccin Mocha**<br>![Catppuccin Mocha](docs/screenshots/prompt-catppuccin_mocha.png) | **JanDeDobbeleer**<br>![JanDeDobbeleer](docs/screenshots/prompt-jandedobbeleer.png) |
+| **Marcduiker**<br>![Marcduiker](docs/screenshots/prompt-marcduiker.png) | **Neko**<br>![Neko](docs/screenshots/prompt-neko.png) |
 
 bat/lsd/tmux/Superfile colors for each theme are derived from that same
 prompt's own segment colors, so the whole terminal matches whichever one
@@ -325,3 +330,25 @@ picker, then two rounds of theme-quality fixes)
   path text at all when at `$HOME`, just the two icons back to back) and
   the exact segment background colors. Swapped the theme slot's URL, bat
   theme (`1337`), and derived role colors accordingly in all three scripts.
+- **Rebuilt the whole theme roster to an explicit 8-theme list** (Dracula,
+  M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
+  Marcduiker, Neko), dropping Paradox/Aliens/Montys/Unicorn. Every one of
+  the 8 is fetched unmodified straight from
+  `JanDeDobbeleer/oh-my-posh/themes/*.omp.json` — no exceptions, even for
+  Catppuccin Mocha (a real per-flavor file that renders as flat plain text,
+  no pill segments — that's genuinely how it looks upstream, so it's used
+  as-is rather than "fixed" the way the general Catppuccin pick already
+  was) and Neko (an emoji-based, plain-style novelty theme with no
+  powerline/diamond segments at all). Where a theme declares its colors
+  through a named `palette` block (`p:name` references) instead of inline
+  hex — M365Princess, Catppuccin, Catppuccin Mocha — the real hex was read
+  from that theme's own palette table (plus, for the two Catppuccin
+  flavors, the rest of the well-known official Catppuccin palette) rather
+  than guessed; every other role color was cross-checked against the
+  theme's actual fetched JSON (including inline hex embedded in template
+  strings, e.g. Neko's git-bracket color) and only invented where a role
+  has no real equivalent in that specific theme (an overall background,
+  for prompt-only themes that don't define one; a hue like green that a
+  small/minimalist palette simply doesn't have). Regenerated screenshots
+  for all 8 themes for real (same `ttyd` + Playwright pipeline as the
+  Atomic swap above) and removed the 4 obsolete ones.

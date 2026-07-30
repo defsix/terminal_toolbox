@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # One-stop terminal setup for Ubuntu / Debian / Raspberry Pi OS
 # zsh + oh-my-zsh, Nerd Font, oh-my-posh, lsd, bat, fzf, zoxide, tmux,
-# superfile — pick your font and theme below (7 themes, all real premade
-# oh-my-posh prompts with genuine powerline color-bar segments: Dracula,
-# Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn).
+# superfile — pick your font and theme below (8 themes, all real premade
+# oh-my-posh prompts fetched unmodified from upstream: Dracula, M365Princess,
+# Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko).
 # Usage: bash setup-ubuntu.sh
 set -e
 
@@ -12,7 +12,7 @@ THEME="dracula"                  # default; the picker below can override this
 FONT_DIR="$HOME/.local/share/fonts"
 
 FONT_CHOICES=(JetBrainsMono FiraCode CascadiaCode Hack Meslo SourceCodePro Iosevka UbuntuMono RobotoMono Inconsolata)
-THEME_CHOICES=(dracula catppuccin atomic paradox aliens montys unicorn)
+THEME_CHOICES=(dracula m365princess atomic catppuccin catppuccin_mocha jandedobbeleer marcduiker neko)
 
 # Prints a numbered menu to stderr, reads a choice from stdin, echoes the
 # selected option to stdout (or the default on empty/invalid input).
@@ -70,6 +70,16 @@ case "$THEME" in
     TMUX_MODE="dracula-plugin"
     C_BG="#282a36"; C_FG="#f8f8f2"; C_MUTED="#6272a4"; C_PURPLE="#bd93f9"; C_ORANGE="#ffb86c"; C_CYAN="#8be9fd"; C_BLUE="#8be9fd"; C_PINK="#ff79c6"; C_YELLOW="#f1fa8c"; C_RED="#ff5555"; C_GREEN="#50fa7b"
     ;;
+  m365princess)
+    # Microsoft 365-branded theme — its colors are declared through the
+    # file's own named "palette" block (p:tan, p:plum, p:blush, etc.), not
+    # inline hex on each segment. Resolved every p:name reference against
+    # that palette table to get the real hex below, rather than guessing.
+    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/M365Princess.omp.json"
+    BAT_THEME_NAME="Visual Studio Dark+"
+    C_BG="#2b1331"; C_FG="#ffffff"; C_MUTED="#86bbd8"; C_PURPLE="#9a348e"; C_ORANGE="#cc3802"; C_CYAN="#047e84"; C_BLUE="#33658a"; C_PINK="#da627d"; C_YELLOW="#fca17d"; C_RED="#cc3802"; C_GREEN="#047e84"
+    L_BG=235; L_FG=15; L_MUTED=110; L_PURPLE=96; L_ORANGE=166; L_CYAN=30; L_BLUE=60; L_PINK=168; L_YELLOW=216; L_RED=166; L_GREEN=30
+    ;;
   catppuccin)
     # The official per-flavor files (catppuccin_mocha/_macchiato/_frappe/_latte
     # .omp.json) all use "style": "plain" — no powerline color-bar segments at
@@ -97,31 +107,51 @@ case "$THEME" in
     C_BG="#0e0e0e"; C_FG="#ffffff"; C_MUTED="#b2bec3"; C_PURPLE="#83769c"; C_ORANGE="#ff9248"; C_CYAN="#40c4ff"; C_BLUE="#0077c2"; C_PINK="#ef5350"; C_YELLOW="#fffb38"; C_RED="#ef5350"; C_GREEN="#66bb6a"
     L_BG=233; L_FG=15; L_MUTED=250; L_PURPLE=103; L_ORANGE=209; L_CYAN=81; L_BLUE=31; L_PINK=203; L_YELLOW=227; L_RED=203; L_GREEN=71
     ;;
-  paradox)
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/paradox.omp.json"
-    BAT_THEME_NAME="OneHalfDark"
-    C_BG="#1e1e2e"; C_FG="#cdd6f4"; C_MUTED="#6c7086"; C_PURPLE="#906cff"; C_ORANGE="#ffe9aa"; C_CYAN="#91ddff"; C_BLUE="#91ddff"; C_PINK="#ff8080"; C_YELLOW="#ffe9aa"; C_RED="#ff8080"; C_GREEN="#95ffa4"
-    L_BG=235; L_FG=189; L_MUTED=243; L_PURPLE=99; L_ORANGE=223; L_CYAN=117; L_BLUE=117; L_PINK=210; L_YELLOW=223; L_RED=210; L_GREEN=121
+  catppuccin_mocha)
+    # Same "core" vs "per-flavor" split as the catppuccin (Macchiato) entry
+    # above, but here the real per-flavor Mocha file is used as-is on
+    # purpose: every per-flavor catppuccin_*.omp.json upstream sets
+    # "style": "plain" on every segment — flat colored text, no powerline/
+    # diamond pill segments at all. That's genuinely how this theme looks
+    # upstream, unmodified; it's not a bug to fix the way the general
+    # "Catppuccin" pick above was. Colors are read from the file's own
+    # "palette" block plus the rest of the well-known official Catppuccin
+    # Mocha palette; the bat theme is the real official catppuccin/bat
+    # Mocha asset, same mechanism as Macchiato above.
+    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_mocha.omp.json"
+    BAT_THEME_NAME="Catppuccin Mocha"
+    BAT_THEME_URL="https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme"
+    C_BG="#1e1e2e"; C_FG="#cdd6f4"; C_MUTED="#acb0be"; C_PURPLE="#b4befe"; C_ORANGE="#fab387"; C_CYAN="#89dceb"; C_BLUE="#89b4fa"; C_PINK="#f5c2e7"; C_YELLOW="#f9e2af"; C_RED="#f38ba8"; C_GREEN="#a6e3a1"
+    L_BG=235; L_FG=189; L_MUTED=249; L_PURPLE=147; L_ORANGE=216; L_CYAN=116; L_BLUE=111; L_PINK=218; L_YELLOW=223; L_RED=211; L_GREEN=151
     ;;
-  aliens)
-    # Atom One Dark-inspired accents — bat's built-in TwoDark theme is the
-    # same palette family, so it's an authentic pairing, not just a guess.
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/aliens.omp.json"
-    BAT_THEME_NAME="TwoDark"
-    C_BG="#282c34"; C_FG="#abb2bf"; C_MUTED="#5c6370"; C_PURPLE="#c678dd"; C_ORANGE="#e5c07b"; C_CYAN="#61afef"; C_BLUE="#61afef"; C_PINK="#ff6471"; C_YELLOW="#e5c07b"; C_RED="#ff6471"; C_GREEN="#95ffa4"
-    L_BG=236; L_FG=249; L_MUTED=241; L_PURPLE=176; L_ORANGE=180; L_CYAN=75; L_BLUE=75; L_PINK=203; L_YELLOW=180; L_RED=203; L_GREEN=121
+  jandedobbeleer)
+    # oh-my-posh's own flagship theme, kept in step with upstream main —
+    # its segment set has already changed more than once within this
+    # repo's own lifetime (conditional per-language segments, a second
+    # shell/time block, etc.), so it's always fetched fresh rather than
+    # assumed stable; whatever upstream currently ships is what renders.
+    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/jandedobbeleer.omp.json"
+    BAT_THEME_NAME="Sublime Snazzy"
+    C_BG="#1a1b26"; C_FG="#c0caf5"; C_MUTED="#565f89"; C_PURPLE="#c386f1"; C_ORANGE="#f36943"; C_CYAN="#2e9599"; C_BLUE="#0077c2"; C_PINK="#ff479c"; C_YELLOW="#fffb38"; C_RED="#ae1401"; C_GREEN="#1bd760"
+    L_BG=234; L_FG=153; L_MUTED=60; L_PURPLE=141; L_ORANGE=203; L_CYAN=30; L_BLUE=31; L_PINK=205; L_YELLOW=227; L_RED=124; L_GREEN=41
     ;;
-  montys)
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/montys.omp.json"
-    BAT_THEME_NAME="Coldark-Dark"
-    C_BG="#22333b"; C_FG="#eae0d5"; C_MUTED="#5e6472"; C_PURPLE="#83769c"; C_ORANGE="#fca17d"; C_CYAN="#33658a"; C_BLUE="#33658a"; C_PINK="#da627d"; C_YELLOW="#fca17d"; C_RED="#da627d"; C_GREEN="#76b367"
-    L_BG=236; L_FG=254; L_MUTED=241; L_PURPLE=103; L_ORANGE=216; L_CYAN=60; L_BLUE=60; L_PINK=168; L_YELLOW=216; L_RED=168; L_GREEN=107
+  marcduiker)
+    # Retro pixel-art palette (orange/yellow/navy/blue) — the path and
+    # status segments are genuine diamond/pill segments upstream, just
+    # fewer of them than the busier themes above.
+    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/marcduiker.omp.json"
+    BAT_THEME_NAME="gruvbox-dark"
+    C_BG="#262b44"; C_FG="#ffffff"; C_MUTED="#5a6988"; C_PURPLE="#7a4fc9"; C_ORANGE="#feae34"; C_CYAN="#2ce8f5"; C_BLUE="#0095e9"; C_PINK="#e43b44"; C_YELLOW="#fee761"; C_RED="#e43b44"; C_GREEN="#38b764"
+    L_BG=236; L_FG=15; L_MUTED=60; L_PURPLE=98; L_ORANGE=215; L_CYAN=45; L_BLUE=32; L_PINK=167; L_YELLOW=221; L_RED=167; L_GREEN=71
     ;;
-  unicorn)
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/unicorn.omp.json"
-    BAT_THEME_NAME="Monokai Extended"
-    C_BG="#0f2027"; C_FG="#d8e9eb"; C_MUTED="#4c6b73"; C_PURPLE="#83769c"; C_ORANGE="#d2ff5e"; C_CYAN="#0087d8"; C_BLUE="#0087d8"; C_PINK="#ff6f91"; C_YELLOW="#d2ff5e"; C_RED="#ff6f91"; C_GREEN="#d2ff5e"
-    L_BG=234; L_FG=254; L_MUTED=241; L_PURPLE=103; L_ORANGE=191; L_CYAN=32; L_BLUE=32; L_PINK=204; L_YELLOW=191; L_RED=204; L_GREEN=191
+  neko)
+    # Whimsical, minimal theme: plain colored text and emoji, no
+    # powerline/diamond segments upstream at all — left that way rather
+    # than forcing a pill look it was never designed to have.
+    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/neko.omp.json"
+    BAT_THEME_NAME="Nord"
+    C_BG="#1a415d"; C_FG="#d8dee9"; C_MUTED="#5faae8"; C_PURPLE="#8d72e1"; C_ORANGE="#ff8000"; C_CYAN="#56b6c2"; C_BLUE="#5faae8"; C_PINK="#d0666f"; C_YELLOW="#e8c547"; C_RED="#d0666f"; C_GREEN="#6fae5f"
+    L_BG=23; L_FG=254; L_MUTED=74; L_PURPLE=98; L_ORANGE=208; L_CYAN=73; L_BLUE=74; L_PINK=167; L_YELLOW=185; L_RED=167; L_GREEN=71
     ;;
   *)
     echo "Unknown theme '$THEME' — falling back to dracula" >&2
