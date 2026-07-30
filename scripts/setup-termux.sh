@@ -211,7 +211,14 @@ else
     # overwrite an untracked path instead of cleanly replacing it.
     rm -f "$(command -v oh-my-posh)"
   fi
-  pkg install -y oh-my-posh || true
+  # --reinstall matters here: if the file we just rm -f'd was dpkg-tracked,
+  # dpkg's database still says the package is installed at its current
+  # version. A plain `pkg install -y` only compares version numbers, sees
+  # nothing to do ("already the newest version"), and leaves the file
+  # missing forever — every future run repeats the same no-op. --reinstall
+  # forces apt/dpkg to redeploy the package's files regardless of the
+  # version already recorded as installed, correctly repairing that desync.
+  pkg install --reinstall -y oh-my-posh || true
   if ! oh-my-posh --version &> /dev/null; then
     echo "termux package unavailable or non-functional, falling back to GitHub binary"
     # oh-my-posh publishes exactly one Android build (posh-android-arm) —

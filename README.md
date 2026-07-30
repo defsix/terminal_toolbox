@@ -293,3 +293,20 @@ picker, then two rounds of theme-quality fixes)
   a still-non-functional fetch gets cleaned up instead of left in place.
   Verified with a simulated broken binary (a non-executable stub) as well
   as the normal already-working case (confirms no unnecessary reinstalls).
+
+### 2026-07-30
+- **Fixed (found via a real device still failing after the fix above):**
+  that broken-binary repair removes the bad file with `rm -f` before
+  reinstalling — but if the removed file was tracked by dpkg, `pkg`'s
+  package database still records it as installed at the current version.
+  A plain `pkg install -y oh-my-posh` only compares version numbers, so it
+  saw "already the newest version" and redeployed nothing, leaving the
+  binary permanently missing (`command -v oh-my-posh` kept returning
+  false) no matter how many times the script reran. Fixed by using
+  `pkg install --reinstall -y oh-my-posh`, which forces apt/dpkg to
+  redeploy the package's files regardless of the version already on
+  record. Reproduced with a PTY test harness using a mock `pkg` that
+  models real dpkg bookkeeping (plain `install` on an "installed" package
+  is a no-op that touches no files; `--reinstall` redeploys) — confirmed
+  the old code left the binary missing while the fix redeployed a working
+  one.

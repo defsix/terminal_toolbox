@@ -167,7 +167,22 @@ anyone who wants real zsh on Windows.
   trying to overwrite it), reinstall, and fall through to the GitHub
   binary if the package is still broken or unavailable — verified again
   after the fetch, so a fetched-but-non-functional binary gets cleaned up
-  instead of left in place.
+  instead of left in place. That `rm -f` step introduced its own follow-on
+  bug: if the file being removed *was* dpkg-tracked, dpkg's database still
+  records the package as installed at its current version after the file
+  is gone, and a plain `pkg install -y` is a version-compare no-op —
+  apt sees "already the newest version" and redeploys nothing, so the
+  reinstall silently does not happen and the missing binary persists on
+  every subsequent run. Confirmed live: `command -v oh-my-posh` returned
+  exit 1 while the script's own `pkg install -y oh-my-posh` output read
+  "oh-my-posh is already the newest version (30.0.0)" / "0 upgraded, 0
+  newly installed". Fixed with `pkg install --reinstall -y oh-my-posh`,
+  which forces apt/dpkg to redeploy the package's files regardless of the
+  version already recorded as installed. Reproduced and verified with a
+  PTY-driven test using a mock `pkg` that models real dpkg bookkeeping
+  (plain `install` on an "installed" package no-ops without touching
+  files; `--reinstall` redeploys) — confirmed the old code left the binary
+  missing while the fixed code redeployed and passed `oh-my-posh --version`.
 - Superfile's release tarball nests the binary under
   `dist/superfile-linux-v<tag>-<arch>/spf`, not at the top level — `cp` the
   full nested path, not `./spf`.
