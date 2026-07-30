@@ -165,7 +165,14 @@ case "$THEME" in
 esac
 
 echo "=== 1/10: base packages ==="
-sudo apt update
+# `apt update` returns nonzero if even one configured source is unreachable
+# (a stale/expired PPA, a VPN-only mirror, etc.) even when every source we
+# actually need (the main Ubuntu archive) refreshed fine — with `set -e`
+# that silently kills the rest of this script at step 1 of 10. The
+# packages below only ever come from the main archive, so a partial
+# refresh is still enough; don't let one broken third-party source block
+# everything downstream.
+sudo apt update || true
 sudo apt install -y zsh curl wget git unzip fontconfig
 
 echo "=== 2/10: Oh My Zsh ==="

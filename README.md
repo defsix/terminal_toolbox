@@ -166,189 +166,100 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
 
 ### 2026-07-29
 **Oh My Zsh / shell setup**
-- Enabled the `zsh-autosuggestions` and `zsh-syntax-highlighting` plugins and
-  disabled Oh My Zsh's own `ZSH_THEME` (Oh My Posh draws the prompt instead).
-- **Fixed:** on a machine that already has a `.zshrc`, Oh My Zsh's installer
-  (`KEEP_ZSHRC=yes`) leaves it untouched and never sources `oh-my-zsh.sh`,
-  silently no-op'ing the plugin patches above. Both scripts now detect this
-  and bootstrap Oh My Zsh into the existing `.zshrc` themselves.
+- Enabled `zsh-autosuggestions` and `zsh-syntax-highlighting`; disabled Oh
+  My Zsh's own theme (Oh My Posh draws the prompt).
+- **Fixed:** on a machine with an existing `.zshrc`, Oh My Zsh's installer
+  leaves it untouched and never sources `oh-my-zsh.sh`, silently no-op'ing
+  the plugin patches. Both scripts now bootstrap Oh My Zsh into an
+  existing `.zshrc` themselves.
 
-**Reliability fixes** (all found by actually dogfooding each script
-end-to-end, not just reading the code)
-- Superfile's `spf path-list` stopped initializing config as of v1.6.0 (it
-  only prints paths now) — switched to `spf --fix-config-file`.
+**Reliability fixes** (found by dogfooding each script end-to-end)
+- Superfile's `spf path-list` stopped initializing config as of v1.6.0 —
+  switched to `spf --fix-config-file` (later replaced again, see below).
 - `setup-windows.ps1`'s profile step silently did nothing on a fresh
-  machine: `Get-Content -Raw` on a brand-new `$PROFILE` returns `$null`,
-  and `$null -notmatch <pattern>` is a falsy empty array, not `$true`.
-- `setup-termux.sh`'s only Superfile install path was 100% broken — the
-  release tarball nests the binary under `dist/<name>/spf`, not at the top
-  level. Its oh-my-posh Android fallback also 404'd on `posh-android-arm64`
-  (doesn't exist; oh-my-posh ships exactly one Android build,
-  `posh-android-arm`) — on the most common real Android architecture,
-  combined with `set -e`, this silently killed the rest of the script.
-- Unauthenticated `api.github.com` release lookups (Superfile on Termux,
-  lsd's .deb fallback on Ubuntu) had no error handling — a rate limit or
-  network hiccup left an empty tag var and, via `set -e`, silently killed
-  the rest of the script. Now checked explicitly with a clear message.
-- `setup-ubuntu.sh` piped the oh-my-posh/Superfile installers straight into
-  `bash` with no error handling — a failed fetch either silently "succeeds"
-  at installing nothing (empty script, exit 0) or, worse, executes a
-  proxy's rejection body as shell commands. Now downloads to a file, checks
-  it explicitly, then runs it.
-- Final cross-platform re-verification after the above landed found and
-  removed one leftover: a dead `alias spf='spf'` in `setup-ubuntu.sh`.
+  machine (`Get-Content -Raw` on a new `$PROFILE` returns `$null`, and
+  `$null -notmatch <pattern>` is a falsy empty array).
+- `setup-termux.sh`'s Superfile install was 100% broken (release tarball
+  nests the binary one level deeper than assumed), and its oh-my-posh
+  Android fallback 404'd on a nonexistent `posh-android-arm64` asset —
+  oh-my-posh ships exactly one Android build, `posh-android-arm`.
+- Unauthenticated `api.github.com` lookups (Superfile/lsd release checks)
+  and piped installer scripts (`curl | bash`) had no error handling — a
+  rate limit, network hiccup, or failed fetch would silently kill the rest
+  of the script under `set -e`, or in the piped-install case risk
+  executing a proxy's rejection body as shell commands. Both now check
+  explicitly before proceeding.
 
-**Tooling and theme system** (bat, fzf, zoxide, tmux, then the interactive
-picker, then two rounds of theme-quality fixes)
-- Added bat, fzf, zoxide, and tmux (Linux/Termux only for tmux) to all
-  three scripts, Dracula-themed initially. fzf is wired in through Oh My
-  Zsh's bundled `fzf` plugin rather than hand-rolling per-distro
-  shell-integration detection.
-- Added an interactive Nerd Font + theme picker (`[ -t 0 ]` / `IsInputRedirected`
-  gated, so piped/CI runs keep the JetBrainsMono + Dracula defaults) with a
-  strip-and-reappend mechanism so switching themes replaces the managed
-  config block instead of duplicating it.
-- **Found and fixed a real lsd bug:** Debian/Ubuntu's apt-packaged lsd
-  (1.0.0) only honors *numeric* xterm-256 color indices in `colors.yaml` —
-  it silently ignores the hex format both `dracula/lsd` and `catppuccin/lsd`
-  publish upstream (confirmed by A/B testing). lsd theming had actually
-  never been wired up by this repo before this pass at all. Fixed by
-  generating real `config.yaml`/`colors.yaml` files with precomputed
-  nearest-match numeric values for every theme except Dracula (whose
-  official file is already numeric).
-- The theme roster went through two correction passes once real screenshots
-  were compared against the target look:
-  1. Oh-my-posh's official per-flavor Catppuccin files
-     (`catppuccin_mocha`/`_macchiato`/`_frappe`/`_latte`) all use flat
-     `"style": "plain"` — no color-bar segments at all. Switched to
-     `catppuccin.omp.json`, the one official "core" theme that actually
-     uses powerline/diamond segments (hardcodes the Macchiato palette, so
-     bat/lsd/superfile/tmux match Macchiato too). 10 themes → 7.
-  2. Gruvbox/Nord/Tokyo Night/Rose Pine/Everforest then came back looking
-     muddy and too similar to each other — turned out to be structural,
-     not a color-picking mistake: those palettes are all, by design
-     philosophy, muted/pastel, and (confirmed by cloning oh-my-posh's full
-     122-file themes directory) no Nord/Rose Pine/Everforest theme exists
-     upstream at all. Replaced all 5 with genuine vibrant premade themes
-     instead (JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn), deriving
-     bat/lsd/tmux/Superfile colors from each one's own segment colors.
-  - **Discovered along the way:** Superfile supports fully custom theme
-    files, not just its bundled names
-    (https://superfile.dev/configure/custom-theme/) — every theme now gets
-    its own generated `~/.config/superfile/theme/<theme>.toml` from its own
-    role colors, instead of guessing the closest bundled name.
-  - **Testing note:** driving `setup-windows.ps1`'s picker outside real
-    Windows needs a PTY fix — PSReadLine blocks `Read-Host` on a
-    cursor-position query (`ESC[6n`) that a plain pseudo-tty never answers.
-    The test driver answers it (`ESC[1;1R`); a real terminal does this
-    itself, so it's a test-harness requirement, not a script issue.
-  - Each stage verified end-to-end on all three platforms: fresh install,
-    an interactive-picker theme switch, and idempotency (no duplicated
-    config on a same-theme rerun).
-- Replaced the placeholder screenshots under `docs/screenshots/` with real
-  [VHS](https://github.com/charmbracelet/vhs) captures throughout, including
-  a small prompt screenshot per theme in the [Themes](#themes) section
-  above — actually run, actually recorded, not mockups.
-- Added the one-line curl-install commands in [Usage](#usage) (process
-  substitution / `iex`, not a plain pipe, so the interactive picker still
-  works over a piped install).
-- **Fixed (found via a real Windows run):** `setup-windows.ps1` only ever
-  set `Set-ExecutionPolicy Bypass -Scope Process -Force`, which covers just
-  the one session running the installer — it never persists, so every
-  *new* PowerShell window still hit Windows' default `Restricted` policy
-  and refused to load `$PROFILE` at all (`UnauthorizedAccess`/
-  `PSSecurityException`), silently leaving oh-my-posh/lsd/aliases dead even
-  though the install itself succeeded. The script now also sets
-  `RemoteSigned` at `CurrentUser` scope near the end (no admin rights
-  needed for that scope, unlike `LocalMachine`) so `$PROFILE` loads in
-  future sessions too — skipped automatically if the user's policy already
-  permits local scripts.
-- **Fixed (found via the same real Windows run):** all three scripts'
-  Superfile step called `spf --fix-config-file` to generate a default
-  `config.toml` on first install. That call opens the real controlling
-  terminal directly (`/dev/tty` on Linux, the equivalent on Windows) rather
-  than respecting redirected stdin/stdout, so on an actual interactive
-  terminal — the normal way anyone runs this script — it launched the full
-  Superfile TUI and hung there instead of writing the config and exiting.
-  The theme still got set correctly on non-interactive test runs (which
-  genuinely have no tty at all and hit the fast, documented "exits because
-  there's no TTY" path), which is exactly why this hadn't been caught
-  before. Fixed by no longer calling `spf --fix-config-file` at all: if
-  `config.toml` doesn't exist, the scripts now write a minimal one
-  themselves with just the `theme = "..."` line — Superfile fills in every
-  other field with its own built-in default, so this is sufficient with no
-  console risk. Reproduced and confirmed fixed with a PTY test harness that
-  properly separates the simulated terminal session from the script
-  process (a single self-`setsid`'d test process doesn't reproduce it).
-- **Fixed (found via a real device that had oh-my-posh break after a
-  Termux backup restore):** `setup-termux.sh` only checked that
-  `oh-my-posh` existed on PATH before deciding to skip installing it —
-  not that it actually ran. A binary can be present but non-functional
-  (Android's linker rejecting a non-PIE ELF with "has unexpected e_type:
-  2" is one real way this happens, notably after restoring `$PREFIX` from
-  a Termux backup taken on a different install/build — Play Store,
-  F-Droid, and GitHub builds aren't guaranteed binary-compatible with each
-  other). Once that happened, the script would report "already installed,
-  skipping" forever after, with no way to recover short of deleting the
-  file by hand. Fixed by verifying `oh-my-posh --version` actually
-  succeeds before treating it as installed; if not, the broken file is
-  removed first (an untracked file at that path can otherwise make `pkg
-  install` fail trying to overwrite it), reinstalled, and — verified again
-  — falls through to the GitHub binary if still broken or unavailable, so
-  a still-non-functional fetch gets cleaned up instead of left in place.
-  Verified with a simulated broken binary (a non-executable stub) as well
-  as the normal already-working case (confirms no unnecessary reinstalls).
+**Tooling and theme system**
+- Added bat, fzf, zoxide, and tmux (Linux/Termux only) to all three
+  scripts, plus an interactive Nerd Font + theme picker (piped/CI runs
+  keep the JetBrainsMono + Dracula defaults) with a strip-and-reappend
+  mechanism so re-running replaces the managed config instead of
+  duplicating it.
+- **Fixed a real lsd bug:** Debian/Ubuntu's apt-packaged lsd (1.0.0) only
+  honors numeric xterm-256 color indices — it silently ignores the hex
+  format both `dracula/lsd` and `catppuccin/lsd` publish upstream. Fixed
+  by generating real `colors.yaml` files with precomputed nearest-match
+  numeric values for every theme except Dracula (already numeric).
+- The theme roster went through two correction passes: oh-my-posh's
+  per-flavor Catppuccin files all render as flat plain text with no color
+  segments, so the pick moved to `catppuccin.omp.json` (the one file that
+  actually uses powerline/diamond segments, hardcoding the Macchiato
+  palette); and Gruvbox/Nord/Tokyo Night/Rose Pine/Everforest came back
+  looking muddy and too similar to each other (those palettes are
+  muted/pastel by design, and oh-my-posh has no official Nord/Rose
+  Pine/Everforest theme at all), so all 5 were replaced with genuine
+  vibrant premade themes instead. 10 themes → 7.
+- Discovered Superfile supports fully custom theme files, not just its
+  bundled names — every theme gets its own generated
+  `~/.config/superfile/theme/<theme>.toml` from its own role colors.
+- Replaced placeholder screenshots with real [VHS](https://github.com/charmbracelet/vhs)
+  captures throughout, and added one-line curl-install commands to
+  [Usage](#usage).
+- **Fixed (real Windows run):** `setup-windows.ps1` only set the
+  Process-scope execution policy, which doesn't persist — every new
+  PowerShell window still refused to load `$PROFILE`. Now also sets
+  `RemoteSigned` at `CurrentUser` scope.
+- **Fixed (same run):** `spf --fix-config-file` opens the real controlling
+  terminal directly, so on any actual interactive run it launched the full
+  Superfile TUI and hung instead of writing the config. Fixed by writing a
+  minimal `config.toml` ourselves instead of ever calling that flag.
+- **Fixed (real device, oh-my-posh broke after a Termux backup restore):**
+  `setup-termux.sh` only checked that `oh-my-posh` was on PATH, not that it
+  actually ran — a binary can be present but non-functional (e.g. a
+  non-PIE ELF after restoring `$PREFIX` from a different Termux
+  build/channel). Fixed by verifying `oh-my-posh --version` actually
+  succeeds before treating it as installed, repairing or falling back to
+  the GitHub binary otherwise.
 
 ### 2026-07-30
-- **Fixed (found via a real device still failing after the fix above):**
-  that broken-binary repair removes the bad file with `rm -f` before
-  reinstalling — but if the removed file was tracked by dpkg, `pkg`'s
-  package database still records it as installed at the current version.
-  A plain `pkg install -y oh-my-posh` only compares version numbers, so it
-  saw "already the newest version" and redeployed nothing, leaving the
-  binary permanently missing (`command -v oh-my-posh` kept returning
-  false) no matter how many times the script reran. Fixed by using
-  `pkg install --reinstall -y oh-my-posh`, which forces apt/dpkg to
-  redeploy the package's files regardless of the version already on
-  record. Reproduced with a PTY test harness using a mock `pkg` that
-  models real dpkg bookkeeping (plain `install` on an "installed" package
-  is a no-op that touches no files; `--reinstall` redeploys) — confirmed
-  the old code left the binary missing while the fix redeployed a working
-  one.
-- **Replaced the JanDeDobbeleer theme slot with Atomic** (theme 3 of 7):
-  reference screenshots of a prompt someone actually liked — a pill/capsule
-  layout (shell-name capsule, folder+home-icon path capsule, execution-time
-  capsule on the left; OS-icon + clock capsules on the right, no touching
-  powerline chevron between the two blocks) — didn't match what upstream
-  `jandedobbeleer.omp.json` currently ships at all: its real released form
-  is a diamond session/path/git/language-version layout with none of that
-  pill styling. Rather than guess from the JSON alone, actually rendered
-  several candidate upstream themes for real (`oh-my-posh print primary`
-  piped into a `ttyd`-served zsh session, screenshotted with Playwright)
-  and compared them against the reference — `atomic.omp.json` matched
-  pixel-for-pixel, including the `folder_icon`/`home_icon` path style (no
-  path text at all when at `$HOME`, just the two icons back to back) and
-  the exact segment background colors. Swapped the theme slot's URL, bat
-  theme (`1337`), and derived role colors accordingly in all three scripts.
-- **Rebuilt the whole theme roster to an explicit 8-theme list** (Dracula,
+- **Fixed (same device, still broken after the fix above):** the
+  broken-binary repair's `rm -f` deletes a dpkg-tracked file without
+  telling dpkg, so a plain `pkg install -y oh-my-posh` saw "already the
+  newest version" and redeployed nothing — the binary stayed missing
+  forever. Fixed with `pkg install --reinstall -y`, which forces dpkg to
+  redeploy regardless of the recorded version.
+- **Fixed:** `apt update`/`pkg update` return nonzero if even one
+  unrelated configured source is unreachable (a stale PPA, a dead
+  mirror), which under `set -e` silently killed the rest of the script at
+  step 1 of 10 even though the sources we actually need were fine. Both
+  now tolerate that failure and continue.
+- **Replaced the JanDeDobbeleer theme slot with Atomic:** reference
+  screenshots of a liked prompt (pill/capsule segments, gap instead of a
+  powerline chevron between blocks) didn't match what upstream
+  `jandedobbeleer.omp.json` currently ships — a diamond session/path/git
+  layout with none of that styling. Rendered several candidate upstream
+  themes for real (`ttyd` + Playwright) and compared against the
+  reference; `atomic.omp.json` matched pixel-for-pixel.
+- **Rebuilt the whole theme roster to an explicit 8-theme list:** Dracula,
   M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
-  Marcduiker, Neko), dropping Paradox/Aliens/Montys/Unicorn. Every one of
-  the 8 is fetched unmodified straight from
-  `JanDeDobbeleer/oh-my-posh/themes/*.omp.json` — no exceptions, even for
-  Catppuccin Mocha (a real per-flavor file that renders as flat plain text,
-  no pill segments — that's genuinely how it looks upstream, so it's used
-  as-is rather than "fixed" the way the general Catppuccin pick already
-  was) and Neko (an emoji-based, plain-style novelty theme with no
-  powerline/diamond segments at all). Where a theme declares its colors
-  through a named `palette` block (`p:name` references) instead of inline
-  hex — M365Princess, Catppuccin, Catppuccin Mocha — the real hex was read
-  from that theme's own palette table (plus, for the two Catppuccin
-  flavors, the rest of the well-known official Catppuccin palette) rather
-  than guessed; every other role color was cross-checked against the
-  theme's actual fetched JSON (including inline hex embedded in template
-  strings, e.g. Neko's git-bracket color) and only invented where a role
-  has no real equivalent in that specific theme (an overall background,
-  for prompt-only themes that don't define one; a hue like green that a
-  small/minimalist palette simply doesn't have). Regenerated screenshots
-  for all 8 themes for real (same `ttyd` + Playwright pipeline as the
-  Atomic swap above) and removed the 4 obsolete ones.
+  Marcduiker, Neko — dropping Paradox/Aliens/Montys/Unicorn. Every theme
+  is fetched unmodified straight from upstream, including Catppuccin
+  Mocha and Neko, which are genuinely flat/plain-style with no pill
+  segments — that's how they look upstream, so they're used as-is rather
+  than "fixed" the way the general Catppuccin pick was. Role colors were
+  read from each theme's own palette (including inline hex in template
+  strings, not just background/foreground fields) and cross-checked
+  against the real fetched JSON, with invented values only where a role
+  has no equivalent in that theme at all. Screenshots regenerated for all
+  8 the same way as the Atomic swap.

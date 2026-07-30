@@ -164,7 +164,13 @@ case "$THEME" in
 esac
 
 echo "=== 1/10: base packages ==="
-pkg update -y
+# `pkg` is a thin wrapper around apt (see the oh-my-posh step below), so it
+# inherits the same failure mode: `pkg update -y` returns nonzero if even
+# one configured mirror/repo is unreachable, even when the one we actually
+# need refreshed fine — with `set -e` that silently kills the rest of this
+# script at step 1 of 10. Don't let one broken mirror block everything
+# downstream.
+pkg update -y || true
 pkg install -y zsh curl wget git unzip
 
 echo "=== 2/10: Oh My Zsh ==="
