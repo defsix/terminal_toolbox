@@ -50,6 +50,11 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force; iex (irm https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-windows.ps1)
 ```
+That `-Scope Process` bypass only covers this one run — the script itself
+permanently sets your user's execution policy to `RemoteSigned` near the
+end (no admin needed for that part), so `$PROFILE` actually loads the next
+time you open PowerShell instead of failing with "running scripts is
+disabled on this system."
 
 All scripts are idempotent — safe to re-run after a partial failure or to
 pick up changes.
@@ -242,3 +247,14 @@ picker, then two rounds of theme-quality fixes)
 - Added the one-line curl-install commands in [Usage](#usage) (process
   substitution / `iex`, not a plain pipe, so the interactive picker still
   works over a piped install).
+- **Fixed (found via a real Windows run):** `setup-windows.ps1` only ever
+  set `Set-ExecutionPolicy Bypass -Scope Process -Force`, which covers just
+  the one session running the installer — it never persists, so every
+  *new* PowerShell window still hit Windows' default `Restricted` policy
+  and refused to load `$PROFILE` at all (`UnauthorizedAccess`/
+  `PSSecurityException`), silently leaving oh-my-posh/lsd/aliases dead even
+  though the install itself succeeded. The script now also sets
+  `RemoteSigned` at `CurrentUser` scope near the end (no admin rights
+  needed for that scope, unlike `LocalMachine`) so `$PROFILE` loads in
+  future sessions too — skipped automatically if the user's policy already
+  permits local scripts.

@@ -13,6 +13,9 @@
 # Usage: run PowerShell as Administrator, then:
 #   Set-ExecutionPolicy Bypass -Scope Process -Force
 #   .\setup-windows.ps1
+# (that Process-scope bypass only covers this one run — the script itself
+# permanently sets CurrentUser execution policy to RemoteSigned near the end
+# so $PROFILE actually loads in future PowerShell windows too.)
 
 $NerdFontName = "JetBrainsMono"   # default; the picker below can override this
 $Theme = "dracula"                # default; the picker below can override this
@@ -301,6 +304,21 @@ if (Test-Path $SpfConfig) {
 }
 
 Section "8/8: PowerShell profile"
+$CurrentUserPolicy = Get-ExecutionPolicy -Scope CurrentUser
+if ($CurrentUserPolicy -eq "Undefined" -or $CurrentUserPolicy -eq "Restricted") {
+  # `Set-ExecutionPolicy Bypass -Scope Process` (per the Usage note above)
+  # only covers the one session running this installer — it never persists,
+  # so every *new* PowerShell window still hits Windows' default Restricted
+  # policy and refuses to load $PROFILE, silently leaving oh-my-posh/lsd/
+  # aliases dead even though the install itself succeeded. RemoteSigned at
+  # CurrentUser scope fixes that for good, needs no admin rights (unlike
+  # -Scope LocalMachine), and still requires downloaded scripts to be
+  # signed — only this user's own local scripts (like $PROFILE) run unsigned.
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+  Write-Host "Execution policy for your user was '$CurrentUserPolicy' — set to RemoteSigned so `$PROFILE actually loads in new PowerShell windows."
+} else {
+  Write-Host "Execution policy already permits local scripts ($CurrentUserPolicy), skipping"
+}
 if (-not (Test-Path $PROFILE)) {
   New-Item -Path $PROFILE -Type File -Force | Out-Null
 }
