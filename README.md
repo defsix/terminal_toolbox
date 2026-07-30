@@ -7,7 +7,7 @@ Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
 [tmux](https://github.com/tmux/tmux), and [Superfile](https://superfile.dev).
 
 Run one interactively and it opens with a picker — 10 Nerd Fonts, 7 themes
-(Dracula, Catppuccin, JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn) —
+(Dracula, Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn) —
 before anything installs. Piped/CI runs skip the prompt and keep the
 Dracula + JetBrainsMono defaults.
 
@@ -71,7 +71,7 @@ pick up changes.
 - 10 Nerd Fonts to choose from: JetBrainsMono, FiraCode, CascadiaCode, Hack,
   Meslo, SourceCodePro, Iosevka, UbuntuMono, RobotoMono, Inconsolata
 - 7 themes, applied consistently across every tool below: Dracula,
-  Catppuccin, JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn — all real
+  Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn — all real
   premade oh-my-posh prompts with genuine powerline color-bar segments,
   not palette knockoffs
 - Oh My Posh drawing the prompt (Oh My Zsh's own theme is disabled so the
@@ -95,7 +95,7 @@ template, so each one looks meaningfully different, not just retinted.
 | | |
 |---|---|
 | **Dracula**<br>![Dracula](docs/screenshots/prompt-dracula.png) | **Catppuccin**<br>![Catppuccin](docs/screenshots/prompt-catppuccin.png) |
-| **JanDeDobbeleer**<br>![JanDeDobbeleer](docs/screenshots/prompt-jandedobbeleer.png) | **Paradox**<br>![Paradox](docs/screenshots/prompt-paradox.png) |
+| **Atomic**<br>![Atomic](docs/screenshots/prompt-atomic.png) | **Paradox**<br>![Paradox](docs/screenshots/prompt-paradox.png) |
 | **Aliens**<br>![Aliens](docs/screenshots/prompt-aliens.png) | **Montys**<br>![Montys](docs/screenshots/prompt-montys.png) |
 | **Unicorn**<br>![Unicorn](docs/screenshots/prompt-unicorn.png) | |
 
@@ -310,3 +310,18 @@ picker, then two rounds of theme-quality fixes)
   is a no-op that touches no files; `--reinstall` redeploys) — confirmed
   the old code left the binary missing while the fix redeployed a working
   one.
+- **Replaced the JanDeDobbeleer theme slot with Atomic** (theme 3 of 7):
+  reference screenshots of a prompt someone actually liked — a pill/capsule
+  layout (shell-name capsule, folder+home-icon path capsule, execution-time
+  capsule on the left; OS-icon + clock capsules on the right, no touching
+  powerline chevron between the two blocks) — didn't match what upstream
+  `jandedobbeleer.omp.json` currently ships at all: its real released form
+  is a diamond session/path/git/language-version layout with none of that
+  pill styling. Rather than guess from the JSON alone, actually rendered
+  several candidate upstream themes for real (`oh-my-posh print primary`
+  piped into a `ttyd`-served zsh session, screenshotted with Playwright)
+  and compared them against the reference — `atomic.omp.json` matched
+  pixel-for-pixel, including the `folder_icon`/`home_icon` path style (no
+  path text at all when at `$HOME`, just the two icons back to back) and
+  the exact segment background colors. Swapped the theme slot's URL, bat
+  theme (`1337`), and derived role colors accordingly in all three scripts.

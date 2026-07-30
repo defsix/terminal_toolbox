@@ -1,7 +1,7 @@
 # One-stop terminal setup for Windows (PowerShell)
 # oh-my-posh, Nerd Font, lsd, bat, fzf, zoxide, superfile — pick your font and
 # theme below (7 themes, all real premade oh-my-posh prompts with genuine
-# powerline color-bar segments: Dracula, Catppuccin, JanDeDobbeleer, Paradox,
+# powerline color-bar segments: Dracula, Catppuccin, Atomic, Paradox,
 # Aliens, Montys, Unicorn).
 #
 # Note: zsh / Oh My Zsh, and tmux, are Linux/macOS tools and don't run
@@ -21,7 +21,7 @@ $NerdFontName = "JetBrainsMono"   # default; the picker below can override this
 $Theme = "dracula"                # default; the picker below can override this
 
 $FontChoices = @("JetBrainsMono", "FiraCode", "CascadiaCode", "Hack", "Meslo", "SourceCodePro", "Iosevka", "UbuntuMono", "RobotoMono", "Inconsolata")
-$ThemeChoices = @("dracula", "catppuccin", "jandedobbeleer", "paradox", "aliens", "montys", "unicorn")
+$ThemeChoices = @("dracula", "catppuccin", "atomic", "paradox", "aliens", "montys", "unicorn")
 
 function Section($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }
 
@@ -81,12 +81,18 @@ switch ($Theme) {
     $BatThemeUrl = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
     $C = @{ BG="#24273a"; FG="#cad3f5"; MUTED="#6e738d"; PURPLE="#c6a0f6"; ORANGE="#f5a97f"; CYAN="#8bd5ca"; PINK="#f5bde6"; YELLOW="#eed49f"; RED="#ed8796"; GREEN="#a6da95" }
   }
-  "jandedobbeleer" {
-    # oh-my-posh's own flagship default theme — real powerline segments,
-    # well-tested, vibrant lavender/pink/yellow/teal.
-    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/jandedobbeleer.omp.json"
-    $BatThemeName = "Sublime Snazzy"
-    $C = @{ BG="#1a1b26"; FG="#c0caf5"; MUTED="#565f89"; PURPLE="#c386f1"; ORANGE="#f36943"; CYAN="#2e9599"; PINK="#ff479c"; YELLOW="#fffb38"; RED="#f7768e"; GREEN="#1bd760" }
+  "atomic" {
+    # Pill/capsule segments (shell name, then folder+home path, then
+    # execution time, left-aligned; OS icon + clock, right-aligned, with a
+    # gap instead of a touching powerline chevron between the two blocks) —
+    # confirmed by actually rendering atomic.omp.json in a real terminal and
+    # comparing screenshots pixel-for-pixel, not by name alone. This used to
+    # be the jandedobbeleer slot, but upstream jandedobbeleer.omp.json's
+    # current released form is a totally different diamond session/path/git
+    # layout — it never looked like this pill style at all.
+    $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/atomic.omp.json"
+    $BatThemeName = "1337"
+    $C = @{ BG="#0e0e0e"; FG="#ffffff"; MUTED="#b2bec3"; PURPLE="#83769c"; ORANGE="#ff9248"; CYAN="#40c4ff"; PINK="#ef5350"; YELLOW="#fffb38"; RED="#ef5350"; GREEN="#66bb6a" }
   }
   "paradox" {
     $OmpThemeUrl = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/paradox.omp.json"

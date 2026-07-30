@@ -3,7 +3,7 @@
 # zsh + oh-my-zsh, Nerd Font, oh-my-posh, lsd, bat, fzf, zoxide, tmux,
 # superfile — pick your font and theme below (7 themes, all real premade
 # oh-my-posh prompts with genuine powerline color-bar segments: Dracula,
-# Catppuccin, JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn).
+# Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn).
 # Usage: bash setup-termux.sh
 set -e
 
@@ -11,7 +11,7 @@ NERD_FONT_NAME="JetBrainsMono"   # default; the picker below can override this
 THEME="dracula"                  # default; the picker below can override this
 
 FONT_CHOICES=(JetBrainsMono FiraCode CascadiaCode Hack Meslo SourceCodePro Iosevka UbuntuMono RobotoMono Inconsolata)
-THEME_CHOICES=(dracula catppuccin jandedobbeleer paradox aliens montys unicorn)
+THEME_CHOICES=(dracula catppuccin atomic paradox aliens montys unicorn)
 
 # Prints a numbered menu to stderr, reads a choice from stdin, echoes the
 # selected option to stdout (or the default on empty/invalid input).
@@ -82,13 +82,19 @@ case "$THEME" in
     C_BG="#24273a"; C_FG="#cad3f5"; C_MUTED="#6e738d"; C_PURPLE="#c6a0f6"; C_ORANGE="#f5a97f"; C_CYAN="#8bd5ca"; C_BLUE="#8aadf4"; C_PINK="#f5bde6"; C_YELLOW="#eed49f"; C_RED="#ed8796"; C_GREEN="#a6da95"
     L_BG=236; L_FG=189; L_MUTED=243; L_PURPLE=183; L_ORANGE=216; L_CYAN=116; L_BLUE=111; L_PINK=218; L_YELLOW=223; L_RED=210; L_GREEN=150
     ;;
-  jandedobbeleer)
-    # oh-my-posh's own flagship default theme — real powerline segments,
-    # well-tested, vibrant lavender/pink/yellow/teal.
-    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/jandedobbeleer.omp.json"
-    BAT_THEME_NAME="Sublime Snazzy"
-    C_BG="#1a1b26"; C_FG="#c0caf5"; C_MUTED="#565f89"; C_PURPLE="#c386f1"; C_ORANGE="#f36943"; C_CYAN="#2e9599"; C_BLUE="#2e9599"; C_PINK="#ff479c"; C_YELLOW="#fffb38"; C_RED="#f7768e"; C_GREEN="#1bd760"
-    L_BG=234; L_FG=153; L_MUTED=60; L_PURPLE=141; L_ORANGE=203; L_CYAN=30; L_BLUE=30; L_PINK=205; L_YELLOW=227; L_RED=210; L_GREEN=41
+  atomic)
+    # Pill/capsule segments (shell name, then folder+home path, then
+    # execution time, left-aligned; OS icon + clock, right-aligned, with a
+    # gap instead of a touching powerline chevron between the two blocks) —
+    # confirmed by actually rendering atomic.omp.json in a real terminal and
+    # comparing screenshots pixel-for-pixel, not by name alone. This used to
+    # be the jandedobbeleer slot, but upstream jandedobbeleer.omp.json's
+    # current released form is a totally different diamond session/path/git
+    # layout — it never looked like this pill style at all.
+    OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/atomic.omp.json"
+    BAT_THEME_NAME="1337"
+    C_BG="#0e0e0e"; C_FG="#ffffff"; C_MUTED="#b2bec3"; C_PURPLE="#83769c"; C_ORANGE="#ff9248"; C_CYAN="#40c4ff"; C_BLUE="#0077c2"; C_PINK="#ef5350"; C_YELLOW="#fffb38"; C_RED="#ef5350"; C_GREEN="#66bb6a"
+    L_BG=233; L_FG=15; L_MUTED=250; L_PURPLE=103; L_ORANGE=209; L_CYAN=81; L_BLUE=31; L_PINK=203; L_YELLOW=227; L_RED=203; L_GREEN=71
     ;;
   paradox)
     OMP_THEME_URL="https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/paradox.omp.json"

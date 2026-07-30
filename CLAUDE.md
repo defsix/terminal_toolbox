@@ -3,7 +3,7 @@
 One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
 lsd, bat, fzf, zoxide, tmux, and Superfile. Run interactively, each script
 opens with a picker for one of 10 Nerd Fonts and one of 7 themes (Dracula,
-Catppuccin, JanDeDobbeleer, Paradox, Aliens, Montys, Unicorn — all genuine
+Catppuccin, Atomic, Paradox, Aliens, Montys, Unicorn — all genuine
 premade oh-my-posh prompts, not palette knockoffs) before anything installs;
 non-interactive/CI runs keep the Dracula + JetBrainsMono defaults (tmux is
 Linux/Termux only — no native Windows port).
@@ -43,7 +43,7 @@ anyone who wants real zsh on Windows.
   script" — every managed config block is regenerated from scratch each run
   (see the strip-and-reappend note below), not hand-edited in place.
 - Oh My Posh theme: every one of the 7 themes is a genuine premade upstream
-  `.omp.json` fetched as-is (Dracula, Catppuccin, JanDeDobbeleer, Paradox,
+  `.omp.json` fetched as-is (Dracula, Catppuccin, Atomic, Paradox,
   Aliens, Montys, Unicorn) — none are recolored from a template. Earlier
   versions of this repo recolored Dracula's template with Nord/Tokyo
   Night/Rose Pine/Everforest's real ecosystem palettes, which technically
@@ -72,6 +72,33 @@ anyone who wants real zsh on Windows.
   hardcodes Catppuccin Macchiato's palette. The script uses that one file
   for the `catppuccin` theme choice, and matches bat/superfile/lsd/tmux to
   Macchiato too so every tool agrees on the same flavor.
+- The theme-3 slot was originally `jandedobbeleer.omp.json` but got swapped
+  to `atomic.omp.json`: someone had reference screenshots of a prompt they
+  liked (pill/capsule segments — shell-name capsule, folder+home-icon path
+  capsule, execution-time capsule on the left; OS-icon + clock capsules on
+  the right, with a gap instead of a touching powerline chevron between the
+  two blocks) that didn't match what upstream `jandedobbeleer.omp.json`
+  currently ships at all — its real released form is a diamond
+  session/path/git/language-version layout, nothing like that pill style.
+  Don't trust a theme's JSON structure alone to judge what it visually
+  renders as (icon glyphs, `style: folder` path options that print icons
+  instead of text, diamond-vs-powerline framing, etc. are easy to misread
+  from the raw file). Confirmed the actual match by rendering candidates
+  for real: `oh-my-posh print primary --config <file>.omp.json --shell zsh`
+  piped into a `ttyd`-served zsh session (`ttyd -p 7681 -W -t
+  'fontFamily=<nerd font>' zsh --login`, needs the client-option flag or
+  the web client won't have Nerd Font glyphs), screenshotted with
+  Playwright (`/opt/pw-browsers/chromium-*/chrome-linux/chrome`, `--no-sandbox`
+  in this sandboxed environment) — `atomic.omp.json` matched pixel-for-pixel,
+  including the `folder_icon`/`home_icon` path style (prints icons only, no
+  path text at all, when at `$HOME`) and the exact segment background
+  colors. Note `api.github.com` and `codeload.github.com` are blocked by
+  this environment's proxy for repos outside the session's scope (can't
+  list a directory or fetch a tarball for a repo like
+  `JanDeDobbeleer/oh-my-posh` that isn't the working repo) but plain
+  `raw.githubusercontent.com` file fetches for known theme filenames still
+  work fine — that's how every theme file in this repo is actually fetched
+  anyway.
 - lsd theme: **numeric xterm-256 color indices only** — Debian/Ubuntu's
   apt-packaged lsd (1.0.0) silently ignores hex color strings in
   `colors.yaml` even though upstream `dracula/lsd` and `catppuccin/lsd`
