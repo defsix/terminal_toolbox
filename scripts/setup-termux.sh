@@ -191,9 +191,29 @@ else
 fi
 
 echo "=== 4/10: oh-my-posh ==="
-if ! command -v oh-my-posh &> /dev/null; then
-  pkg install -y oh-my-posh || {
-    echo "termux package unavailable, falling back to GitHub binary"
+# `command -v` only proves a file exists on PATH, not that it actually runs.
+# A binary left behind by a bad `pkg` mirror, an interrupted GitHub fetch, or
+# (very commonly on Termux) restoring $PREFIX from a backup taken on a
+# different Termux install/build can be present but non-functional — e.g.
+# Android's linker outright refusing a non-PIE ELF ("has unexpected e_type").
+# Trusting presence alone means a broken binary gets silently accepted once
+# and then "already installed, skipping" forever after, with no way to
+# recover short of the user noticing and deleting it by hand. Check that it
+# actually runs before deciding to skip.
+if command -v oh-my-posh &> /dev/null && oh-my-posh --version &> /dev/null; then
+  echo "already installed, skipping"
+else
+  if command -v oh-my-posh &> /dev/null; then
+    echo "oh-my-posh is on PATH but doesn't run (broken binary?) — reinstalling"
+    # Remove it first: if this broken file isn't tracked by dpkg at all (e.g.
+    # it came from the GitHub-fallback fetch below on a previous run, not
+    # from the pkg below), `pkg install` can fail outright trying to
+    # overwrite an untracked path instead of cleanly replacing it.
+    rm -f "$(command -v oh-my-posh)"
+  fi
+  pkg install -y oh-my-posh || true
+  if ! oh-my-posh --version &> /dev/null; then
+    echo "termux package unavailable or non-functional, falling back to GitHub binary"
     # oh-my-posh publishes exactly one Android build (posh-android-arm) —
     # unlike its Linux targets, there's no separate arm64/amd64 asset. An
     # earlier arch-mapped URL (posh-android-arm64/amd64) 404'd on every real
@@ -203,13 +223,15 @@ if ! command -v oh-my-posh &> /dev/null; then
     if wget -q "https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-android-arm" \
          -O "$PREFIX/bin/oh-my-posh"; then
       chmod +x "$PREFIX/bin/oh-my-posh"
+      if ! oh-my-posh --version &> /dev/null; then
+        rm -f "$PREFIX/bin/oh-my-posh"
+        echo "Fetched oh-my-posh but it still doesn't run on this device — skipping. Install manually from https://ohmyposh.dev once a compatible build is available."
+      fi
     else
       rm -f "$PREFIX/bin/oh-my-posh"
       echo "Couldn't fetch the posh-android-arm binary — skipping oh-my-posh install. Install manually from https://ohmyposh.dev once it's available for your device."
     fi
-  }
-else
-  echo "already installed, skipping"
+  fi
 fi
 
 echo "--- fetching $THEME theme for oh-my-posh ---"

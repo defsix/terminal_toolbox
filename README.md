@@ -275,3 +275,21 @@ picker, then two rounds of theme-quality fixes)
   console risk. Reproduced and confirmed fixed with a PTY test harness that
   properly separates the simulated terminal session from the script
   process (a single self-`setsid`'d test process doesn't reproduce it).
+- **Fixed (found via a real device that had oh-my-posh break after a
+  Termux backup restore):** `setup-termux.sh` only checked that
+  `oh-my-posh` existed on PATH before deciding to skip installing it —
+  not that it actually ran. A binary can be present but non-functional
+  (Android's linker rejecting a non-PIE ELF with "has unexpected e_type:
+  2" is one real way this happens, notably after restoring `$PREFIX` from
+  a Termux backup taken on a different install/build — Play Store,
+  F-Droid, and GitHub builds aren't guaranteed binary-compatible with each
+  other). Once that happened, the script would report "already installed,
+  skipping" forever after, with no way to recover short of deleting the
+  file by hand. Fixed by verifying `oh-my-posh --version` actually
+  succeeds before treating it as installed; if not, the broken file is
+  removed first (an untracked file at that path can otherwise make `pkg
+  install` fail trying to overwrite it), reinstalled, and — verified again
+  — falls through to the GitHub binary if still broken or unavailable, so
+  a still-non-functional fetch gets cleaned up instead of left in place.
+  Verified with a simulated broken binary (a non-executable stub) as well
+  as the normal already-working case (confirms no unnecessary reinstalls).

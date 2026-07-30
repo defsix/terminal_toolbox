@@ -150,6 +150,24 @@ anyone who wants real zsh on Windows.
   `posh-android-arm` — there is no `posh-android-arm64` or `-amd64` asset
   (confirmed against actual release assets, not assumed). Don't arch-map
   this one the way the Linux/Windows targets are mapped; hardcode `arm`.
+- `command -v oh-my-posh` only proves a file exists on PATH, not that it
+  actually runs. A binary can be present but non-functional — a bad `pkg`
+  mirror, an interrupted GitHub fetch, or (very commonly on Termux)
+  restoring `$PREFIX` from a backup taken on a *different* Termux
+  install/build (Play Store vs. F-Droid vs. GitHub — different signing
+  keys, not guaranteed binary-compatible) can all leave a file that Android's
+  linker refuses to run (`... has unexpected e_type: 2` — a non-PIE ELF,
+  which modern Android rejects outright). Found via a real device hitting
+  exactly this after a backup restore. Trusting presence alone means the
+  broken binary gets silently accepted once and then "already installed,
+  skipping" forever after, with no way to recover short of the user
+  deleting it by hand. Fixed by verifying `oh-my-posh --version` actually
+  succeeds before treating it as installed; if not, remove the broken file
+  first (an untracked file at that path can make `pkg install` itself fail
+  trying to overwrite it), reinstall, and fall through to the GitHub
+  binary if the package is still broken or unavailable — verified again
+  after the fetch, so a fetched-but-non-functional binary gets cleaned up
+  instead of left in place.
 - Superfile's release tarball nests the binary under
   `dist/superfile-linux-v<tag>-<arch>/spf`, not at the top level — `cp` the
   full nested path, not `./spf`.
@@ -229,6 +247,16 @@ anyone who wants real zsh on Windows.
   under Termux in the past (see `posh-android-*` binaries used as the
   fallback) — if it breaks, check the JanDeDobbeleer/oh-my-posh GitHub
   discussions for the current state.
+- Termux itself ships through three channels that are not interchangeable:
+  the Play Store build is officially deprecated by the Termux project
+  (frozen on an old release, Play policies made it unmaintainable) and
+  shouldn't be recommended to users; F-Droid re-signs APKs with its own
+  key, which breaks compatibility with the official add-ons (Termux:API,
+  Termux:Styling, etc.) and has historically lagged behind releases;
+  GitHub releases (`termux/termux-app`) is what the project now points
+  people to. All three share the package name `com.termux`, so switching
+  channels needs an uninstall first — and per the point above, only
+  restore `$HOME` afterward, never `$PREFIX`.
 - On a minimized/`nodoc`-stripped Ubuntu (apt configured with
   `path-exclude=/usr/share/doc/*`, common in slim Docker base images but
   not a real Desktop/Pi install), Oh My Zsh's `fzf` plugin can't find
