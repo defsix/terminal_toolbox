@@ -231,11 +231,18 @@ if (-not (Get-Command spf -ErrorAction SilentlyContinue)) {
 
 Write-Host "--- setting superfile theme to $Theme ---"
 $SpfConfig = "$env:APPDATA\superfile\config.toml"
-if (-not (Test-Path $SpfConfig) -and (Get-Command spf -ErrorAction SilentlyContinue)) {
-  # --fix-config-file writes the default config/hotkeys files as a side
-  # effect, then exits non-zero because there's no TTY to open the TUI in
-  # (fine — we only care about the files it wrote before failing).
-  spf --fix-config-file *> $null
+if (-not (Test-Path $SpfConfig)) {
+  # `spf --fix-config-file` looks like the natural way to generate this, but
+  # it opens the real console directly (like CONIN$/CONOUT$) rather than
+  # respecting redirected streams, so on an actual interactive PowerShell
+  # window (i.e. every real run of this script) it launches the full TUI
+  # and hangs instead of writing the config and exiting — confirmed live on
+  # real Windows, not just suspected. Superfile fills in every field it
+  # doesn't find with a built-in default (that's what --fix-config-file
+  # itself is documented to do: "adds any *missing* fields"), so a minimal
+  # file with just the theme line is sufficient and has no console risk.
+  New-Item -ItemType Directory -Force -Path (Split-Path $SpfConfig) | Out-Null
+  Set-Content -Path $SpfConfig -Value "theme = `"$Theme`""
 }
 # Superfile supports fully custom theme files (not just its bundled names) —
 # https://superfile.dev/configure/custom-theme/ — so write our own using this

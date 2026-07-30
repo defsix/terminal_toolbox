@@ -258,3 +258,20 @@ picker, then two rounds of theme-quality fixes)
   needed for that scope, unlike `LocalMachine`) so `$PROFILE` loads in
   future sessions too — skipped automatically if the user's policy already
   permits local scripts.
+- **Fixed (found via the same real Windows run):** all three scripts'
+  Superfile step called `spf --fix-config-file` to generate a default
+  `config.toml` on first install. That call opens the real controlling
+  terminal directly (`/dev/tty` on Linux, the equivalent on Windows) rather
+  than respecting redirected stdin/stdout, so on an actual interactive
+  terminal — the normal way anyone runs this script — it launched the full
+  Superfile TUI and hung there instead of writing the config and exiting.
+  The theme still got set correctly on non-interactive test runs (which
+  genuinely have no tty at all and hit the fast, documented "exits because
+  there's no TTY" path), which is exactly why this hadn't been caught
+  before. Fixed by no longer calling `spf --fix-config-file` at all: if
+  `config.toml` doesn't exist, the scripts now write a minimal one
+  themselves with just the `theme = "..."` line — Superfile fills in every
+  other field with its own built-in default, so this is sufficient with no
+  console risk. Reproduced and confirmed fixed with a PTY test harness that
+  properly separates the simulated terminal session from the script
+  process (a single self-`setsid`'d test process doesn't reproduce it).

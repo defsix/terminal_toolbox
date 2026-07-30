@@ -406,10 +406,17 @@ echo "--- setting superfile theme to $THEME ---"
 SPF_CONFIG_DIR="$HOME/.config/superfile"
 SPF_CONFIG="$SPF_CONFIG_DIR/config.toml"
 if [ ! -f "$SPF_CONFIG" ]; then
-  # --fix-config-file writes the default config/hotkeys files as a side
-  # effect, then exits non-zero because there's no TTY to open the TUI in
-  # (fine — we only care about the files it wrote before failing).
-  spf --fix-config-file >/dev/null 2>&1 || true
+  # `spf --fix-config-file` looks like the natural way to generate this, but
+  # it opens the real controlling terminal directly (like /dev/tty) rather
+  # than respecting redirected stdin/stdout, so on an actual interactive
+  # terminal (i.e. every real run of this script) it launches the full TUI
+  # and hangs instead of writing the config and exiting — confirmed live,
+  # not just suspected. Superfile fills in every field it doesn't find with
+  # a built-in default (that's what --fix-config-file itself is documented
+  # to do: "adds any *missing* fields"), so a minimal file with just the
+  # theme line is sufficient and has no TTY risk at all.
+  mkdir -p "$SPF_CONFIG_DIR"
+  echo "theme = \"$THEME\"" > "$SPF_CONFIG"
 fi
 # Superfile supports fully custom theme files (not just its bundled names) —
 # https://superfile.dev/configure/custom-theme/ — so write our own using this
