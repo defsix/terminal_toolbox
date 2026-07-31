@@ -1,13 +1,13 @@
 # terminal-setup
 
 One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
-lsd, bat, fzf, zoxide, tmux, and Superfile. Run interactively, each script
-opens with a picker for one of 10 Nerd Fonts and one of 8 themes (Dracula,
-M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
+lsd, bat, fzf, zoxide, tmux, Superfile, and nerdfetch. Run interactively,
+each script opens with a picker for one of 10 Nerd Fonts and one of 8 themes
+(Dracula, M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
 Marcduiker, Neko — all genuine premade oh-my-posh prompts fetched
 unmodified from upstream) before anything installs;
-non-interactive/CI runs keep the Dracula + JetBrainsMono defaults (tmux is
-Linux/Termux only — no native Windows port).
+non-interactive/CI runs keep the Dracula + JetBrainsMono defaults (tmux and
+nerdfetch are Linux/Termux only — no native Windows port).
 
 ## Platforms
 
@@ -295,6 +295,39 @@ anyone who wants real zsh on Windows.
   this repo can't script non-interactively anyway.
 - zoxide: `zoxide init zsh` / `zoxide init powershell`, both first-party
   and stable — no version-compatibility concerns like fzf's `--zsh` flag.
+- nerdfetch (Linux/Termux only — its own project explicitly excludes
+  Windows entirely, even under Git Bash, so `setup-windows.ps1` just notes
+  this in its final summary and points to WSL, same as tmux/zsh): no
+  Debian/Ubuntu/Termux package exists at all, only Arch/Homebrew/Nix/
+  Gentoo, so it's always a straight `curl` of the single POSIX shell
+  script — no package-manager-first/binary-fallback split like the other
+  tools, and no architecture matching since it's a shell script, not a
+  compiled binary. Installed to `$HOME/.local/bin/nerdfetch` on Ubuntu
+  (`$PREFIX/bin/nerdfetch` on Termux, already on PATH by default there)
+  and invoked as the last line of the managed `.zshrc` block, guarded by
+  `command -v nerdfetch &> /dev/null &&` so a failed fetch doesn't leave
+  every new shell printing a "command not found" error. That managed
+  block is regenerated in full every run, which already makes the
+  invocation idempotent; a bare `nerdfetch` line left outside the block
+  from an older run is additionally stripped by its own `sed` pass, so
+  re-running never accumulates a second call to it however it got there.
+- **Found and fixed a real bug while testing the nerdfetch addition**:
+  every tool this repo installs to `$HOME/.local/bin` on Ubuntu
+  (oh-my-posh, Superfile, nerdfetch) uses `command -v <tool>` to decide
+  whether to skip a reinstall — but `setup-ubuntu.sh`'s own process never
+  had `~/.local/bin` on `PATH`; only the *generated* `.zshrc` did. The
+  check only ever succeeded by accident, inherited from whatever `PATH`
+  the caller's own shell already had (which on a real interactive login
+  shell usually already includes `~/.local/bin`, since Ubuntu's stock
+  `.profile` adds it — masking the bug in the most common case). On a
+  truly fresh account, or under the "curl the script into `bash <(...)`"
+  one-liner this repo's own README recommends, every rerun would silently
+  re-download instead of skipping. Fixed with `export PATH="$HOME/.local/bin:$PATH"`
+  near the top of the script, for its own process. Reproduced by driving
+  the PTY test harness with a minimal, non-inherited `PATH` (deliberately
+  excluding `~/.local/bin` rather than letting it leak in from the host)
+  and confirming via the installed file's mtime that a rerun no longer
+  redownloads it, with "already installed, skipping" printing correctly.
 
 ## Testing notes
 

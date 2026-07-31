@@ -4,7 +4,8 @@ One-stop scripts to provision a terminal with zsh (or PowerShell), a Nerd
 Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
 [lsd](https://github.com/lsd-rs/lsd), [bat](https://github.com/sharkdp/bat),
 [fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
-[tmux](https://github.com/tmux/tmux), and [Superfile](https://superfile.dev).
+[tmux](https://github.com/tmux/tmux), [Superfile](https://superfile.dev), and
+[nerdfetch](https://github.com/ThatOneCalculator/NerdFetch).
 
 Run one interactively and it opens with a picker — 10 Nerd Fonts, 8 themes
 (Dracula, M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
@@ -83,6 +84,10 @@ pick up changes.
 - zoxide, a learning `cd` — `z`/`zi` jump to frecently-used directories
 - tmux, themed status bar (Linux/Termux only — no native Windows port; use WSL)
 - Superfile (`spf`), themed to match
+- [nerdfetch](https://github.com/ThatOneCalculator/NerdFetch), a Nerd Font
+  system-info fetch, runs automatically at the end of a new shell
+  (Linux/Termux only — nerdfetch itself doesn't support Windows at all,
+  even under Git Bash; use WSL)
 
 ## Themes
 
@@ -263,3 +268,26 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   against the real fetched JSON, with invented values only where a role
   has no equivalent in that theme at all. Screenshots regenerated for all
   8 the same way as the Atomic swap.
+
+### 2026-07-31
+- **Added [nerdfetch](https://github.com/ThatOneCalculator/NerdFetch)** (a
+  Nerd Font system-info fetch tool) to `setup-ubuntu.sh` and
+  `setup-termux.sh`, invoked automatically at the end of a new shell.
+  Windows is skipped entirely — nerdfetch's own project explicitly doesn't
+  support it, even under Git Bash — matching the existing tmux/zsh
+  "use WSL" carve-out in `setup-windows.ps1`. There's no distro package for
+  Debian/Ubuntu/Termux, so it's a straight, architecture-independent fetch
+  of the single POSIX shell script. Idempotency comes from the existing
+  managed `.zshrc` block (regenerated in full each run), plus an explicit
+  strip of any bare `nerdfetch` invocation line left outside that block.
+- **Fixed (found while testing the above):** every tool installed to
+  `~/.local/bin` (oh-my-posh, Superfile, and now nerdfetch) was never
+  actually detected as already-installed on a rerun of `setup-ubuntu.sh` —
+  the script's own process never had `~/.local/bin` on `PATH` itself, only
+  the *generated* `.zshrc` did, so `command -v <tool>` only succeeded by
+  accident (inherited from whatever the caller's shell already had). On a
+  truly fresh account, every rerun would silently re-download instead of
+  skipping. Fixed by exporting `PATH` for the script's own process too.
+  Reproduced with a minimal, non-inherited `PATH` in the test harness and
+  confirmed fixed by checking the installed file's mtime doesn't change
+  and "already installed, skipping" prints correctly across reruns.

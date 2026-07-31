@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # One-stop terminal setup for Termux (Android)
 # zsh + oh-my-zsh, Nerd Font, oh-my-posh, lsd, bat, fzf, zoxide, tmux,
-# superfile — pick your font and theme below (8 themes, all real premade
+# superfile, nerdfetch — pick your font and theme below (8 themes, all real premade
 # oh-my-posh prompts fetched unmodified from upstream: Dracula, M365Princess,
 # Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko).
 # Usage: bash setup-termux.sh
@@ -163,7 +163,7 @@ case "$THEME" in
     ;;
 esac
 
-echo "=== 1/10: base packages ==="
+echo "=== 1/11: base packages ==="
 # `pkg` is a thin wrapper around apt (see the oh-my-posh step below), so it
 # inherits the same failure mode: `pkg update -y` returns nonzero if even
 # one configured mirror/repo is unreachable, even when the one we actually
@@ -173,7 +173,7 @@ echo "=== 1/10: base packages ==="
 pkg update -y || true
 pkg install -y zsh curl wget git unzip
 
-echo "=== 2/10: Oh My Zsh ==="
+echo "=== 2/11: Oh My Zsh ==="
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c \
     "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -216,7 +216,7 @@ EOF
   fi
 fi
 
-echo "=== 3/10: Nerd Font ($NERD_FONT_NAME) ==="
+echo "=== 3/11: Nerd Font ($NERD_FONT_NAME) ==="
 # Termux doesn't use fontconfig — a single ~/.termux/font.ttf is the terminal font.
 mkdir -p "$HOME/.termux"
 if [ ! -f "$HOME/.termux/font.ttf" ]; then
@@ -232,7 +232,7 @@ else
   echo "already installed, skipping"
 fi
 
-echo "=== 4/10: oh-my-posh ==="
+echo "=== 4/11: oh-my-posh ==="
 # `command -v` only proves a file exists on PATH, not that it actually runs.
 # A binary left behind by a bad `pkg` mirror, an interrupted GitHub fetch, or
 # (very commonly on Termux) restoring $PREFIX from a backup taken on a
@@ -314,7 +314,7 @@ else
   echo "already present, skipping"
 fi
 
-echo "=== 5/10: lsd ==="
+echo "=== 5/11: lsd ==="
 if ! command -v lsd &> /dev/null; then
   pkg install -y lsd
 else
@@ -365,7 +365,7 @@ else
   echo "already present, skipping"
 fi
 
-echo "=== 6/10: bat ==="
+echo "=== 6/11: bat ==="
 if ! command -v bat &> /dev/null && ! command -v batcat &> /dev/null; then
   pkg install -y bat
 else
@@ -386,21 +386,21 @@ if command -v "$BAT_CMD" &> /dev/null && [ -n "$BAT_THEME_URL" ]; then
   fi
 fi
 
-echo "=== 7/10: fzf ==="
+echo "=== 7/11: fzf ==="
 if ! command -v fzf &> /dev/null; then
   pkg install -y fzf
 else
   echo "already installed, skipping"
 fi
 
-echo "=== 8/10: zoxide ==="
+echo "=== 8/11: zoxide ==="
 if ! command -v zoxide &> /dev/null; then
   pkg install -y zoxide
 else
   echo "already installed, skipping"
 fi
 
-echo "=== 9/10: tmux ==="
+echo "=== 9/11: tmux ==="
 if ! command -v tmux &> /dev/null; then
   pkg install -y tmux
 else
@@ -446,7 +446,7 @@ $TMUX_MARK_END
 EOF
 fi
 
-echo "=== 10/10: superfile ==="
+echo "=== 10/11: superfile ==="
 if ! command -v spf &> /dev/null; then
   ARCH=$(uname -m)
   case "$ARCH" in
@@ -557,6 +557,22 @@ else
   echo "Couldn't find/generate $SPF_CONFIG — run 'spf' once yourself, then set theme = \"$THEME\" in it."
 fi
 
+echo "=== 11/11: nerdfetch ==="
+# No Termux/apt package exists for this (only Arch/Homebrew/Nix/Gentoo) —
+# it's a single POSIX shell script, so there's no per-architecture binary
+# to match either, just a straight fetch to a file.
+if ! command -v nerdfetch &> /dev/null; then
+  if curl -fsSL https://raw.githubusercontent.com/ThatOneCalculator/NerdFetch/main/nerdfetch \
+       -o "$PREFIX/bin/nerdfetch" && [ -s "$PREFIX/bin/nerdfetch" ]; then
+    chmod +x "$PREFIX/bin/nerdfetch"
+  else
+    rm -f "$PREFIX/bin/nerdfetch"
+    echo "Couldn't fetch nerdfetch — skipping. Install manually from https://github.com/ThatOneCalculator/NerdFetch"
+  fi
+else
+  echo "already installed, skipping"
+fi
+
 echo "=== configuring .zshrc ==="
 MARK="# >>> custom terminal setup >>>"
 MARK_END="# <<< custom terminal setup <<<"
@@ -564,6 +580,11 @@ touch "$HOME/.zshrc"
 if grep -qF "$MARK" "$HOME/.zshrc"; then
   sed -i "/^${MARK}\$/,/^${MARK_END}\$/d" "$HOME/.zshrc"
 fi
+# Belt-and-suspenders: the managed block above (regenerated in full every
+# run) already covers a nerdfetch line added inside it, but strip any bare
+# `nerdfetch` invocation line left outside that block too, in case one was
+# ever added by hand — so re-running never ends up with two calls to it.
+sed -i '/^[[:space:]]*nerdfetch[[:space:]]*$/d' "$HOME/.zshrc"
 cat >> "$HOME/.zshrc" << EOF
 
 $MARK
@@ -582,6 +603,8 @@ export BAT_THEME="$BAT_THEME_NAME"
 alias cat='bat'
 
 export FZF_DEFAULT_OPTS='--color=fg:$C_FG,bg:$C_BG,hl:$C_PURPLE --color=fg+:$C_FG,bg+:$C_MUTED,hl+:$C_PURPLE --color=info:$C_ORANGE,prompt:$C_GREEN,pointer:$C_PINK --color=marker:$C_PINK,spinner:$C_ORANGE,header:$C_MUTED'
+
+command -v nerdfetch &> /dev/null && nerdfetch
 $MARK_END
 EOF
 
@@ -603,6 +626,9 @@ All done. Next steps:
      \`z\`/\`zi\` (learns your most-used directories).
   6. tmux is set to the $THEME theme (~/.tmux.conf) — start a session with
      tmux.
-  7. Want a different font or theme? Just rerun this script — it'll prompt
+  7. nerdfetch runs automatically at the end of a new shell (uses your
+     Nerd Font icons — install it manually from
+     https://github.com/ThatOneCalculator/NerdFetch if the fetch above failed).
+  8. Want a different font or theme? Just rerun this script — it'll prompt
      again and replace the old config.
 EOF
