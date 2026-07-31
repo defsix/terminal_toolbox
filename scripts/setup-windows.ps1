@@ -1,6 +1,6 @@
 # One-stop terminal setup for Windows (PowerShell)
-# oh-my-posh, Nerd Font, lsd, bat, fzf, zoxide, superfile — pick your font and
-# theme below (8 themes, all real premade oh-my-posh prompts fetched
+# oh-my-posh, Nerd Font, lsd, bat, fzf, zoxide, superfile, fastfetch — pick
+# your font and theme below (8 themes, all real premade oh-my-posh prompts fetched
 # unmodified from upstream: Dracula, M365Princess, Atomic, Catppuccin,
 # Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko).
 #
@@ -154,13 +154,13 @@ switch ($Theme) {
   }
 }
 
-Section "1/8: winget check"
+Section "1/9: winget check"
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
   Write-Host "winget not found. Install 'App Installer' from the Microsoft Store, then re-run this script." -ForegroundColor Red
   exit 1
 }
 
-Section "2/8: oh-my-posh"
+Section "2/9: oh-my-posh"
 if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
   winget install --id JanDeDobbeleer.OhMyPosh -s winget --accept-source-agreements --accept-package-agreements
   # winget installs to a versioned folder; refresh PATH for the rest of this session
@@ -211,7 +211,7 @@ if (-not (Test-Path $ThemePath)) {
   Write-Host "already present, skipping"
 }
 
-Section "3/8: lsd"
+Section "3/9: lsd"
 if (-not (Get-Command lsd -ErrorAction SilentlyContinue)) {
   winget install --id lsd-rs.lsd -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -219,7 +219,7 @@ if (-not (Get-Command lsd -ErrorAction SilentlyContinue)) {
   Write-Host "already installed, skipping"
 }
 
-Section "4/8: bat"
+Section "4/9: bat"
 if (-not (Get-Command bat -ErrorAction SilentlyContinue)) {
   winget install --id sharkdp.bat -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -240,7 +240,7 @@ if ((Get-Command bat -ErrorAction SilentlyContinue) -and $BatThemeUrl) {
   }
 }
 
-Section "5/8: fzf"
+Section "5/9: fzf"
 if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
   winget install --id junegunn.fzf -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -248,7 +248,7 @@ if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
   Write-Host "already installed, skipping"
 }
 
-Section "6/8: zoxide"
+Section "6/9: zoxide"
 if (-not (Get-Command zoxide -ErrorAction SilentlyContinue)) {
   winget install --id ajeetdsouza.zoxide -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -256,7 +256,7 @@ if (-not (Get-Command zoxide -ErrorAction SilentlyContinue)) {
   Write-Host "already installed, skipping"
 }
 
-Section "7/8: superfile"
+Section "7/9: superfile"
 if (-not (Get-Command spf -ErrorAction SilentlyContinue)) {
   winget install --id yorukot.superfile -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -345,7 +345,18 @@ if (Test-Path $SpfConfig) {
   Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = `"$Theme`" in its config.toml (run 'spf path-list' to find the exact path)."
 }
 
-Section "8/8: PowerShell profile"
+Section "8/9: fastfetch"
+# nerdfetch (used on the Linux/Termux scripts) explicitly doesn't support
+# Windows at all — its own project excludes it, even under Git Bash — so
+# this is fastfetch instead, which does have a real winget package.
+if (-not (Get-Command fastfetch -ErrorAction SilentlyContinue)) {
+  winget install --id Fastfetch-cli.Fastfetch -e --accept-source-agreements --accept-package-agreements
+  $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+} else {
+  Write-Host "already installed, skipping"
+}
+
+Section "9/9: PowerShell profile"
 $CurrentUserPolicy = Get-ExecutionPolicy -Scope CurrentUser
 if ($CurrentUserPolicy -eq "Undefined" -or $CurrentUserPolicy -eq "Restricted") {
   # `Set-ExecutionPolicy Bypass -Scope Process` (per the Usage note above)
@@ -371,11 +382,30 @@ $ProfileContent = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
 # <pattern> comes back as an empty array (falsy) rather than $true — so on a
 # fresh machine (no pre-existing profile) this would silently skip adding the
 # config below. Check for empty content explicitly first.
-if (-not [string]::IsNullOrEmpty($ProfileContent) -and $ProfileContent -match [regex]::Escape($Mark)) {
-  # Strip the previously-managed block so re-running with a different
-  # theme/font replaces it instead of appending a duplicate.
-  $ProfileContent = [regex]::Replace($ProfileContent, [regex]::Escape($Mark) + "[\s\S]*?" + [regex]::Escape($MarkEnd) + "\r?\n?", "")
-  Set-Content -Path $PROFILE -Value $ProfileContent -NoNewline
+if (-not [string]::IsNullOrEmpty($ProfileContent)) {
+  $OriginalProfileContent = $ProfileContent
+  if ($ProfileContent -match [regex]::Escape($Mark)) {
+    # Strip the previously-managed block so re-running with a different
+    # theme/font replaces it instead of appending a duplicate.
+    $ProfileContent = [regex]::Replace($ProfileContent, [regex]::Escape($Mark) + "[\s\S]*?" + [regex]::Escape($MarkEnd) + "\r?\n?", "")
+  }
+  # Belt-and-suspenders: the managed block above (regenerated in full every
+  # run) already covers a fastfetch line added inside it, but strip any
+  # bare `fastfetch` invocation line left outside that block too, in case
+  # one was ever added by hand — so re-running never ends up with two
+  # calls to it.
+  $ProfileContent = [regex]::Replace($ProfileContent, "(?m)^[ \t]*fastfetch[ \t]*\r?\n?", "")
+  # A pre-existing neofetch invocation (from the user's own prior setup,
+  # not this script's) would otherwise print its own system-info banner
+  # right alongside fastfetch's on every new PowerShell window. Comment it
+  # out rather than deleting it, so it's disabled but the user can still
+  # see it was there and restore it by hand if they want. Idempotent: a
+  # line already commented no longer starts with the bare command name, so
+  # it won't match again on a rerun.
+  $ProfileContent = [regex]::Replace($ProfileContent, "(?m)^([ \t]*)neofetch([ \t].*)?$", '$1# neofetch$2')
+  if ($ProfileContent -ne $OriginalProfileContent) {
+    Set-Content -Path $PROFILE -Value $ProfileContent -NoNewline
+  }
 }
 @"
 
@@ -392,6 +422,8 @@ function lt  { lsd --tree @args }
 
 `$env:BAT_THEME = "$BatThemeName"
 `$env:FZF_DEFAULT_OPTS = "--color=fg:$($C.FG),bg:$($C.BG),hl:$($C.PURPLE) --color=fg+:$($C.FG),bg+:$($C.MUTED),hl+:$($C.PURPLE) --color=info:$($C.ORANGE),prompt:$($C.GREEN),pointer:$($C.PINK) --color=marker:$($C.PINK),spinner:$($C.ORANGE),header:$($C.MUTED)"
+
+if (Get-Command fastfetch -ErrorAction SilentlyContinue) { fastfetch }
 $MarkEnd
 "@ | Add-Content -Path $PROFILE
 
@@ -403,5 +435,5 @@ Write-Host "  4. Superfile is set to the $Theme theme. Launch it with: spf"
 Write-Host "  5. bat is set to the $Theme theme (`$env:BAT_THEME); fzf uses the $Theme palette via `$env:FZF_DEFAULT_OPTS; zoxide replaces cd habits with z/zi (learns your most-used directories)."
 Write-Host "  6. tmux doesn't run natively on Windows. Want it (with a Dracula theme)? Use WSL (wsl --install) and run setup-ubuntu.sh inside it."
 Write-Host "  7. Want real zsh too? Same answer: WSL (wsl --install) and run setup-ubuntu.sh inside it."
-Write-Host "  8. nerdfetch (the Nerd Font system-info fetch tool) doesn't support Windows at all, even under a shell like Git Bash - its own project explicitly excludes it. Same answer again: WSL (wsl --install) and run setup-ubuntu.sh inside it."
+Write-Host "  8. fastfetch is set up and runs automatically at the end of a new PowerShell window (nerdfetch, used on the Linux/Termux scripts, doesn't support Windows at all - fastfetch is the equivalent here)."
 Write-Host "  9. Want a different font or theme? Just rerun this script — it'll prompt again and replace the old config."

@@ -1,13 +1,15 @@
 # terminal-setup
 
 One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
-lsd, bat, fzf, zoxide, tmux, Superfile, and nerdfetch. Run interactively,
-each script opens with a picker for one of 10 Nerd Fonts and one of 8 themes
-(Dracula, M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
-Marcduiker, Neko — all genuine premade oh-my-posh prompts fetched
-unmodified from upstream) before anything installs;
-non-interactive/CI runs keep the Dracula + JetBrainsMono defaults (tmux and
-nerdfetch are Linux/Termux only — no native Windows port).
+lsd, bat, fzf, zoxide, tmux, Superfile, and a system-info fetch tool
+(nerdfetch on Linux/Termux, fastfetch on Windows — nerdfetch itself has no
+Windows support at all). Run interactively, each script opens with a
+picker for one of 10 Nerd Fonts and one of 8 themes (Dracula, M365Princess,
+Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko —
+all genuine premade oh-my-posh prompts fetched unmodified from upstream)
+before anything installs; non-interactive/CI runs keep the Dracula +
+JetBrainsMono defaults (tmux and nerdfetch are Linux/Termux only — no
+native Windows port).
 
 ## Platforms
 
@@ -296,21 +298,50 @@ anyone who wants real zsh on Windows.
 - zoxide: `zoxide init zsh` / `zoxide init powershell`, both first-party
   and stable — no version-compatibility concerns like fzf's `--zsh` flag.
 - nerdfetch (Linux/Termux only — its own project explicitly excludes
-  Windows entirely, even under Git Bash, so `setup-windows.ps1` just notes
-  this in its final summary and points to WSL, same as tmux/zsh): no
-  Debian/Ubuntu/Termux package exists at all, only Arch/Homebrew/Nix/
-  Gentoo, so it's always a straight `curl` of the single POSIX shell
-  script — no package-manager-first/binary-fallback split like the other
-  tools, and no architecture matching since it's a shell script, not a
-  compiled binary. Installed to `$HOME/.local/bin/nerdfetch` on Ubuntu
-  (`$PREFIX/bin/nerdfetch` on Termux, already on PATH by default there)
-  and invoked as the last line of the managed `.zshrc` block, guarded by
+  Windows entirely, even under Git Bash): no Debian/Ubuntu/Termux package
+  exists at all, only Arch/Homebrew/Nix/Gentoo, so it's always a straight
+  `curl` of the single POSIX shell script — no package-manager-first/
+  binary-fallback split like the other tools, and no architecture matching
+  since it's a shell script, not a compiled binary. Installed to
+  `$HOME/.local/bin/nerdfetch` on Ubuntu (`$PREFIX/bin/nerdfetch` on
+  Termux, already on PATH by default there) and invoked as the last line
+  of the managed `.zshrc` block, guarded by
   `command -v nerdfetch &> /dev/null &&` so a failed fetch doesn't leave
   every new shell printing a "command not found" error. That managed
   block is regenerated in full every run, which already makes the
   invocation idempotent; a bare `nerdfetch` line left outside the block
   from an older run is additionally stripped by its own `sed` pass, so
   re-running never accumulates a second call to it however it got there.
+- fastfetch on `setup-windows.ps1`: nerdfetch's own Windows exclusion means
+  Windows needs a different tool entirely, not just a "use WSL" carve-out
+  like tmux/zsh — fastfetch has a real winget package
+  (`Fastfetch-cli.Fastfetch`, confirmed against the actual winget-pkgs
+  manifest path rather than assumed), installed and invoked at the end of
+  `$PROFILE` the same way nerdfetch is invoked at the end of `.zshrc`
+  (`if (Get-Command fastfetch -ErrorAction SilentlyContinue) { fastfetch }`
+  guard, same idempotency reasoning: the managed block is regenerated in
+  full every run, plus a `[regex]::Replace` pass strips any bare
+  `fastfetch` line left outside it).
+- **All three scripts comment out (never delete) a pre-existing
+  fastfetch/neofetch invocation** found in the shell config, so it doesn't
+  print its own system-info banner alongside the new one on every prompt.
+  This is deliberately different from how the script handles its own
+  tool's stray lines (nerdfetch on Linux/Termux, fastfetch on Windows) —
+  those get fully stripped and regenerated since they're just this
+  script's own mechanism; a genuinely pre-existing *other* fetch tool from
+  the user's own prior setup gets prefixed with `# ` instead, preserving
+  it in case they want it back. The regex
+  (`^([ \t]*)(fastfetch|neofetch)([ \t].*)?$` → `\1# \2\3` in bash,
+  `(?m)^([ \t]*)neofetch([ \t].*)?$` → `` $1# neofetch$2 `` in PowerShell)
+  matches only when the tool name is the first token on the line, so it
+  correctly skips `alias fastfetch=...` and `command -v neofetch && ...`
+  lines rather than mangling them, and is naturally idempotent — a line
+  already commented no longer starts with the bare command name, so a
+  rerun won't double-comment it. Verified end-to-end with a pre-seeded
+  `neofetch`/`fastfetch` line in `.zshrc`/`$PROFILE` on all three scripts,
+  confirming it gets commented (or, for the script's own tool, stripped)
+  on the first run and stays that way — not re-commented, not
+  duplicated — across reruns with a different theme.
 - **Found and fixed a real bug while testing the nerdfetch addition**:
   every tool this repo installs to `$HOME/.local/bin` on Ubuntu
   (oh-my-posh, Superfile, nerdfetch) uses `command -v <tool>` to decide

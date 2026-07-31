@@ -585,6 +585,14 @@ fi
 # `nerdfetch` invocation line left outside that block too, in case one was
 # ever added by hand — so re-running never ends up with two calls to it.
 sed -i '/^[[:space:]]*nerdfetch[[:space:]]*$/d' "$HOME/.zshrc"
+# A pre-existing fastfetch/neofetch invocation (from the user's own prior
+# setup, not this script's) would otherwise print its own system-info
+# banner right alongside nerdfetch's on every new shell. Comment it out
+# rather than deleting it, so it's disabled but the user can still see it
+# was there and restore it by hand if they want. Idempotent: a line already
+# commented no longer starts with the bare command name, so it won't match
+# again on a rerun.
+sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
 cat >> "$HOME/.zshrc" << EOF
 
 $MARK

@@ -4,8 +4,10 @@ One-stop scripts to provision a terminal with zsh (or PowerShell), a Nerd
 Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
 [lsd](https://github.com/lsd-rs/lsd), [bat](https://github.com/sharkdp/bat),
 [fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
-[tmux](https://github.com/tmux/tmux), [Superfile](https://superfile.dev), and
-[nerdfetch](https://github.com/ThatOneCalculator/NerdFetch).
+[tmux](https://github.com/tmux/tmux), [Superfile](https://superfile.dev), and a
+system-info fetch tool — [nerdfetch](https://github.com/ThatOneCalculator/NerdFetch)
+on Linux/Termux, [fastfetch](https://github.com/fastfetch-cli/fastfetch) on
+Windows (nerdfetch doesn't support Windows at all).
 
 Run one interactively and it opens with a picker — 10 Nerd Fonts, 8 themes
 (Dracula, M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
@@ -84,10 +86,13 @@ pick up changes.
 - zoxide, a learning `cd` — `z`/`zi` jump to frecently-used directories
 - tmux, themed status bar (Linux/Termux only — no native Windows port; use WSL)
 - Superfile (`spf`), themed to match
-- [nerdfetch](https://github.com/ThatOneCalculator/NerdFetch), a Nerd Font
-  system-info fetch, runs automatically at the end of a new shell
-  (Linux/Termux only — nerdfetch itself doesn't support Windows at all,
-  even under Git Bash; use WSL)
+- A system-info fetch tool runs automatically at the end of a new shell:
+  [nerdfetch](https://github.com/ThatOneCalculator/NerdFetch) on
+  Linux/Termux (it doesn't support Windows at all, even under Git Bash),
+  [fastfetch](https://github.com/fastfetch-cli/fastfetch) on Windows
+  instead. Either script comments out (never deletes) a pre-existing
+  fastfetch/neofetch invocation it finds in your shell config, so it
+  doesn't fight with the new one for stdout on every prompt.
 
 ## Themes
 
@@ -291,3 +296,18 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   Reproduced with a minimal, non-inherited `PATH` in the test harness and
   confirmed fixed by checking the installed file's mtime doesn't change
   and "already installed, skipping" prints correctly across reruns.
+- **Added [fastfetch](https://github.com/fastfetch-cli/fastfetch) to
+  `setup-windows.ps1`** as the Windows equivalent of nerdfetch (which
+  doesn't support Windows at all), via its real winget package
+  (`Fastfetch-cli.Fastfetch`), invoked at the end of `$PROFILE` the same
+  way nerdfetch is invoked at the end of `.zshrc`.
+- **All three scripts now comment out (never delete) a pre-existing
+  fastfetch/neofetch invocation** they find in the shell config, so it
+  doesn't print its own system-info banner alongside the new one on every
+  prompt. A bare invocation of the tool the script itself just installed
+  (nerdfetch on Linux/Termux, fastfetch on Windows) is still fully
+  stripped and regenerated as before — only a genuinely pre-existing
+  *other* tool's line gets the preserve-but-disable treatment. Verified
+  end-to-end on all three scripts: a pre-seeded `neofetch`/`fastfetch`
+  line gets commented out on the first run and stays that way (not
+  re-commented, not duplicated) across reruns with a different theme.
