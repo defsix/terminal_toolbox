@@ -1,15 +1,15 @@
 # terminal-setup
 
 One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
-lsd, bat, fzf, zoxide, tmux, Superfile, and a system-info fetch tool
-(nerdfetch on Linux/Termux, fastfetch on Windows — nerdfetch itself has no
-Windows support at all). Run interactively, each script opens with a
+lsd, bat, fzf, zoxide, tmux, Superfile, fastfetch (a system-info fetch tool,
+the same one on every platform — nerdfetch was dropped in favor of it, see
+the Conventions bullet below), and btop (a resource monitor; btop4win on
+Windows). Run interactively, each script opens with a
 picker for one of 10 Nerd Fonts and one of 8 themes (Dracula, M365Princess,
 Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko —
 all genuine premade oh-my-posh prompts fetched unmodified from upstream)
 before anything installs; non-interactive/CI runs keep the Dracula +
-JetBrainsMono defaults (tmux and nerdfetch are Linux/Termux only — no
-native Windows port).
+JetBrainsMono defaults (tmux is Linux/Termux only — no native Windows port).
 
 ## Platforms
 
@@ -343,6 +343,28 @@ anyone who wants real zsh on Windows.
   confirming it gets commented (or, for the script's own tool, stripped)
   on the first run and stays that way — not re-commented, not
   duplicated — across reruns with a different theme.
+- **Superseded: nerdfetch was replaced with fastfetch on every platform
+  (Linux/Termux/CachyOS), and btop was added.** The nerdfetch- and
+  Windows-only-fastfetch-specific details in the two bullets above (and
+  the "deliberately different" distinction between the script's own tool
+  vs. a pre-existing other one) describe how things used to work, kept for
+  history rather than rewritten. Current state: fastfetch is this script's
+  own tool everywhere now, installed via `apt` (with a GitHub `.deb`
+  fallback matched by `dpkg --print-architecture` for older Ubuntu/Debian/
+  current Raspberry Pi OS — fastfetch publishes no `armhf`/32-bit-ARM
+  asset at all, so a 32-bit Pi without it in `apt` has no fallback here),
+  `pkg` (Termux), `pacman` (CachyOS), and the existing winget install
+  (Windows, unchanged). The fastfetch/neofetch comment-out regex on the
+  three bash scripts now also matches a stray `nerdfetch` line left
+  outside the managed block, so an existing install migrates cleanly
+  (verified: an old bare `nerdfetch` line gets commented out on rerun,
+  with `fastfetch` as the only active invocation afterward). btop is
+  installed the same package-manager way on Linux/Termux/CachyOS; Windows
+  uses `aristocratos.btop4win` via winget — the original btop has no
+  native Windows build, and btop4win is a separately maintained port of
+  the same project (not a recolor/fork of unrelated code), whose winget
+  package installs a `btop` command alias alongside the `btop4win.exe`
+  binary itself.
 - **Found and fixed a real bug while testing the nerdfetch addition**:
   every tool this repo installs to `$HOME/.local/bin` on Ubuntu
   (oh-my-posh, Superfile, nerdfetch) uses `command -v <tool>` to decide

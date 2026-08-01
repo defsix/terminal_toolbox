@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # One-stop terminal setup for Ubuntu / Debian / Raspberry Pi OS
 # zsh + oh-my-zsh, Nerd Font, oh-my-posh, lsd, bat, fzf, zoxide, tmux,
-# superfile, nerdfetch — pick your font and theme below (8 themes, all real premade
+# superfile, fastfetch, btop — pick your font and theme below (8 themes, all real premade
 # oh-my-posh prompts fetched unmodified from upstream: Dracula, M365Princess,
 # Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko).
 # Usage: bash setup-ubuntu.sh
 set -e
 
-# oh-my-posh/Superfile/nerdfetch below all install to ~/.local/bin — export
+# oh-my-posh/Superfile below both install to ~/.local/bin — export
 # it for this script's own process now, not just the .zshrc line generated
 # further down. Without this, `command -v <tool>` in every "already
 # installed, skipping" check below only succeeds by accident (inherited
@@ -174,7 +174,7 @@ case "$THEME" in
     ;;
 esac
 
-echo "=== 1/11: base packages ==="
+echo "=== 1/12: base packages ==="
 # `apt update` returns nonzero if even one configured source is unreachable
 # (a stale/expired PPA, a VPN-only mirror, etc.) even when every source we
 # actually need (the main Ubuntu archive) refreshed fine — with `set -e`
@@ -185,7 +185,7 @@ echo "=== 1/11: base packages ==="
 sudo apt update || true
 sudo apt install -y zsh curl wget git unzip fontconfig
 
-echo "=== 2/11: Oh My Zsh ==="
+echo "=== 2/12: Oh My Zsh ==="
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c \
     "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -239,7 +239,7 @@ EOF
   fi
 fi
 
-echo "=== 3/11: Nerd Font ($NERD_FONT_NAME) ==="
+echo "=== 3/12: Nerd Font ($NERD_FONT_NAME) ==="
 mkdir -p "$FONT_DIR"
 if ! fc-list | grep -qi "$NERD_FONT_NAME Nerd Font"; then
   cd /tmp
@@ -251,7 +251,7 @@ else
   echo "already installed, skipping"
 fi
 
-echo "=== 4/11: oh-my-posh ==="
+echo "=== 4/12: oh-my-posh ==="
 if ! command -v oh-my-posh &> /dev/null; then
   mkdir -p "$HOME/.local/bin"
   # Piping straight into `bash` hides failures two ways: if the fetch fails
@@ -301,7 +301,7 @@ else
   echo "already present, skipping"
 fi
 
-echo "=== 5/11: lsd ==="
+echo "=== 5/12: lsd ==="
 if ! command -v lsd &> /dev/null; then
   sudo apt install -y lsd || {
     echo "apt package unavailable, falling back to .deb release"
@@ -370,7 +370,7 @@ else
   echo "already present, skipping"
 fi
 
-echo "=== 6/11: bat ==="
+echo "=== 6/12: bat ==="
 if ! command -v bat &> /dev/null && ! command -v batcat &> /dev/null; then
   sudo apt install -y bat
 else
@@ -391,21 +391,21 @@ if command -v "$BAT_CMD" &> /dev/null && [ -n "$BAT_THEME_URL" ]; then
   fi
 fi
 
-echo "=== 7/11: fzf ==="
+echo "=== 7/12: fzf ==="
 if ! command -v fzf &> /dev/null; then
   sudo apt install -y fzf
 else
   echo "already installed, skipping"
 fi
 
-echo "=== 8/11: zoxide ==="
+echo "=== 8/12: zoxide ==="
 if ! command -v zoxide &> /dev/null; then
   sudo apt install -y zoxide
 else
   echo "already installed, skipping"
 fi
 
-echo "=== 9/11: tmux ==="
+echo "=== 9/12: tmux ==="
 if ! command -v tmux &> /dev/null; then
   sudo apt install -y tmux
 else
@@ -451,7 +451,7 @@ $TMUX_MARK_END
 EOF
 fi
 
-echo "=== 10/11: superfile ==="
+echo "=== 10/12: superfile ==="
 if ! command -v spf &> /dev/null; then
   # Same reasoning as the oh-my-posh step above: a bare `curl | bash` (or
   # `bash -c "$(curl ...)"`) silently masks a failed fetch instead of
@@ -544,20 +544,39 @@ else
   echo "Couldn't find/generate $SPF_CONFIG — run 'spf' once yourself, then set theme = \"$THEME\" in it."
 fi
 
-echo "=== 11/11: nerdfetch ==="
-# No apt/distro package exists for this (nerdfetch isn't packaged for
-# Debian/Ubuntu at all, only Arch/Homebrew/Nix/Gentoo) — it's a single
-# POSIX shell script, so there's no binary/architecture to match either,
-# just a straight fetch to a file.
-if ! command -v nerdfetch &> /dev/null; then
-  mkdir -p "$HOME/.local/bin"
-  if curl -fsSL https://raw.githubusercontent.com/ThatOneCalculator/NerdFetch/main/nerdfetch \
-       -o "$HOME/.local/bin/nerdfetch" && [ -s "$HOME/.local/bin/nerdfetch" ]; then
-    chmod +x "$HOME/.local/bin/nerdfetch"
-  else
-    rm -f "$HOME/.local/bin/nerdfetch"
-    echo "Couldn't fetch nerdfetch — skipping. Install manually from https://github.com/ThatOneCalculator/NerdFetch"
+echo "=== 11/12: fastfetch ==="
+# Only recent Ubuntu (25.04+)/Debian (13+) ship this in the default apt
+# repos — older releases (including most current Raspberry Pi OS/Debian 12
+# installs) need the GitHub release .deb instead, matched to architecture
+# the same way the font/oh-my-posh steps do. fastfetch's own releases only
+# publish amd64/aarch64 .deb assets — no 32-bit ARM (armhf) build — so a
+# 32-bit Raspberry Pi without it already in apt has no fallback here short
+# of building from source.
+if ! command -v fastfetch &> /dev/null; then
+  if ! sudo apt install -y fastfetch; then
+    echo "Not available via apt on this release — falling back to the GitHub release .deb."
+    ARCH="$(dpkg --print-architecture)"
+    FASTFETCH_DEB=""
+    case "$ARCH" in
+      amd64) FASTFETCH_DEB="fastfetch-linux-amd64.deb" ;;
+      arm64) FASTFETCH_DEB="fastfetch-linux-aarch64.deb" ;;
+    esac
+    if [ -n "$FASTFETCH_DEB" ] && curl -fsSL "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$FASTFETCH_DEB" \
+         -o /tmp/fastfetch.deb && [ -s /tmp/fastfetch.deb ]; then
+      sudo apt install -y /tmp/fastfetch.deb || echo "Couldn't install the downloaded fastfetch .deb — skipping. Install manually from https://github.com/fastfetch-cli/fastfetch"
+      rm -f /tmp/fastfetch.deb
+    else
+      rm -f /tmp/fastfetch.deb
+      echo "No fastfetch .deb available for architecture $ARCH — skipping. Install manually from https://github.com/fastfetch-cli/fastfetch"
+    fi
   fi
+else
+  echo "already installed, skipping"
+fi
+
+echo "=== 12/12: btop ==="
+if ! command -v btop &> /dev/null; then
+  sudo apt install -y btop || echo "Couldn't install btop via apt — skipping. Install manually from https://github.com/aristocratos/btop"
 else
   echo "already installed, skipping"
 fi
@@ -569,19 +588,16 @@ touch "$HOME/.zshrc"
 if grep -qF "$MARK" "$HOME/.zshrc"; then
   sed -i "/^${MARK}\$/,/^${MARK_END}\$/d" "$HOME/.zshrc"
 fi
-# Belt-and-suspenders: the managed block above (regenerated in full every
-# run) already covers a nerdfetch line added inside it, but strip any bare
-# `nerdfetch` invocation line left outside that block too, in case one was
-# ever added by hand — so re-running never ends up with two calls to it.
-sed -i '/^[[:space:]]*nerdfetch[[:space:]]*$/d' "$HOME/.zshrc"
-# A pre-existing fastfetch/neofetch invocation (from the user's own prior
-# setup, not this script's) would otherwise print its own system-info
-# banner right alongside nerdfetch's on every new shell. Comment it out
-# rather than deleting it, so it's disabled but the user can still see it
-# was there and restore it by hand if they want. Idempotent: a line already
-# commented no longer starts with the bare command name, so it won't match
-# again on a rerun.
-sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
+# fastfetch is this script's own tool now (nerdfetch was dropped in favor
+# of it), so a pre-existing neofetch invocation, or a *stray* fastfetch/
+# nerdfetch call left outside the managed block (e.g. from before this
+# script switched away from nerdfetch), would otherwise print an extra
+# banner alongside the one the managed block below already adds. Comment
+# it out rather than deleting it, so it's disabled but the user can still
+# see it was there and restore it by hand if they want. Idempotent: a line
+# already commented no longer starts with the bare command name, so it
+# won't match again on a rerun.
+sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch|nerdfetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
 # A pre-existing Powerlevel10k setup (some distros, e.g. CachyOS, ship this
 # by default; a user could also have set it up manually here) would fight
 # oh-my-posh (below) for control of prompt-drawing — both hook zsh's own
@@ -625,7 +641,7 @@ alias cat='bat'
 
 export FZF_DEFAULT_OPTS='--color=fg:$C_FG,bg:$C_BG,hl:$C_PURPLE --color=fg+:$C_FG,bg+:$C_MUTED,hl+:$C_PURPLE --color=info:$C_ORANGE,prompt:$C_GREEN,pointer:$C_PINK --color=marker:$C_PINK,spinner:$C_ORANGE,header:$C_MUTED'
 
-command -v nerdfetch &> /dev/null && nerdfetch
+command -v fastfetch &> /dev/null && fastfetch
 $MARK_END
 EOF
 
@@ -649,9 +665,10 @@ All done. Next steps:
      \`z\`/\`zi\` (learns your most-used directories).
   6. tmux is set to the $THEME theme (~/.tmux.conf) — start a session with
      tmux.
-  7. nerdfetch runs automatically at the end of a new shell (uses your
+  7. fastfetch runs automatically at the end of a new shell (uses your
      Nerd Font icons — install it manually from
-     https://github.com/ThatOneCalculator/NerdFetch if the fetch above failed).
-  8. Want a different font or theme? Just rerun this script — it'll prompt
+     https://github.com/fastfetch-cli/fastfetch if the install above failed).
+  8. btop is installed for a resource monitor — launch it with: btop
+  9. Want a different font or theme? Just rerun this script — it'll prompt
      again and replace the old config.
 EOF

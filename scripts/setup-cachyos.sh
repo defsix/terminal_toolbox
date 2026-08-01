@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # One-stop terminal setup for CachyOS (Arch Linux-based)
 # zsh + oh-my-zsh, Nerd Font, oh-my-posh, lsd, bat, fzf, zoxide, tmux,
-# superfile, nerdfetch — pick your font and theme below (8 themes, all real
+# superfile, fastfetch, btop — pick your font and theme below (8 themes, all real
 # premade oh-my-posh prompts fetched unmodified from upstream: Dracula,
 # M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
 # Marcduiker, Neko).
 # Usage: bash setup-cachyos.sh
 set -e
 
-# oh-my-posh/Superfile/nerdfetch below all install to ~/.local/bin — export
+# oh-my-posh/Superfile below both install to ~/.local/bin — export
 # it for this script's own process now, not just the .zshrc line generated
 # further down. Without this, `command -v <tool>` in every "already
 # installed, skipping" check below only succeeds by accident (inherited
@@ -210,7 +210,7 @@ case "$THEME" in
     ;;
 esac
 
-echo "=== 1/11: base packages ==="
+echo "=== 1/12: base packages ==="
 # Arch explicitly does not support "partial upgrades" — syncing the package
 # database (-Sy) and installing/updating individual packages without also
 # upgrading everything else already on the system (-Su) can leave shared
@@ -224,7 +224,7 @@ echo "=== 1/11: base packages ==="
 # kill the whole script over it.
 pacman_run -Syu --needed --noconfirm zsh git curl wget fontconfig || true
 
-echo "=== 2/11: Oh My Zsh ==="
+echo "=== 2/12: Oh My Zsh ==="
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c \
     "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -278,7 +278,7 @@ EOF
   fi
 fi
 
-echo "=== 3/11: Nerd Font ($NERD_FONT_NAME) ==="
+echo "=== 3/12: Nerd Font ($NERD_FONT_NAME) ==="
 # Unlike Ubuntu/Termux, no manual download+unzip dance needed — Arch's
 # official extra repo packages every one of our 10 font choices directly.
 if ! fc-list | grep -qi "$NERD_FONT_NAME Nerd Font"; then
@@ -292,7 +292,7 @@ else
   echo "already installed, skipping"
 fi
 
-echo "=== 4/11: oh-my-posh ==="
+echo "=== 4/12: oh-my-posh ==="
 # No official Arch package (only user-maintained AUR ones with known
 # completion-support issues) — use the same official cross-distro installer
 # the Ubuntu/Termux scripts use instead of reaching for an AUR helper.
@@ -345,7 +345,7 @@ else
   echo "already present, skipping"
 fi
 
-echo "=== 5/11: lsd ==="
+echo "=== 5/12: lsd ==="
 if ! command -v lsd &> /dev/null; then
   pacman_run -S --needed --noconfirm lsd || echo "Couldn't install lsd — install it manually once pacman is free, then rerun this script."
 else
@@ -396,7 +396,7 @@ else
   echo "already present, skipping"
 fi
 
-echo "=== 6/11: bat ==="
+echo "=== 6/12: bat ==="
 if ! command -v bat &> /dev/null; then
   pacman_run -S --needed --noconfirm bat || echo "Couldn't install bat — install it manually once pacman is free, then rerun this script."
 else
@@ -416,21 +416,21 @@ if command -v bat &> /dev/null && [ -n "$BAT_THEME_URL" ]; then
   fi
 fi
 
-echo "=== 7/11: fzf ==="
+echo "=== 7/12: fzf ==="
 if ! command -v fzf &> /dev/null; then
   pacman_run -S --needed --noconfirm fzf || echo "Couldn't install fzf — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi
 
-echo "=== 8/11: zoxide ==="
+echo "=== 8/12: zoxide ==="
 if ! command -v zoxide &> /dev/null; then
   pacman_run -S --needed --noconfirm zoxide || echo "Couldn't install zoxide — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi
 
-echo "=== 9/11: tmux ==="
+echo "=== 9/12: tmux ==="
 if ! command -v tmux &> /dev/null; then
   pacman_run -S --needed --noconfirm tmux || echo "Couldn't install tmux — install it manually once pacman is free, then rerun this script."
 else
@@ -476,7 +476,7 @@ $TMUX_MARK_END
 EOF
 fi
 
-echo "=== 10/11: superfile ==="
+echo "=== 10/12: superfile ==="
 if ! command -v spf &> /dev/null; then
   # No official Arch package (AUR-only, and the -bin variant has a known
   # "doesn't provide the spf command" bug) — use the same official
@@ -569,21 +569,18 @@ else
   echo "Couldn't find/generate $SPF_CONFIG — run 'spf' once yourself, then set theme = \"$THEME\" in it."
 fi
 
-echo "=== 11/11: nerdfetch ==="
-# nerdfetch does have a real AUR package, but it's just a single POSIX shell
-# script with no build step — using the same direct fetch the Ubuntu/Termux
-# scripts use is simpler and avoids depending on an AUR helper (paru, which
-# CachyOS ships by default, but which this repo otherwise never needs) for a
-# one-file tool.
-if ! command -v nerdfetch &> /dev/null; then
-  mkdir -p "$HOME/.local/bin"
-  if curl -fsSL https://raw.githubusercontent.com/ThatOneCalculator/NerdFetch/main/nerdfetch \
-       -o "$HOME/.local/bin/nerdfetch" && [ -s "$HOME/.local/bin/nerdfetch" ]; then
-    chmod +x "$HOME/.local/bin/nerdfetch"
-  else
-    rm -f "$HOME/.local/bin/nerdfetch"
-    echo "Couldn't fetch nerdfetch — skipping. Install manually from https://github.com/ThatOneCalculator/NerdFetch"
-  fi
+echo "=== 11/12: fastfetch ==="
+# Real Arch official package (extra repo), unlike Ubuntu/Termux which need
+# fallback/pkg logic — a plain pacman_run install is all this needs here.
+if ! command -v fastfetch &> /dev/null; then
+  pacman_run -S --needed --noconfirm fastfetch || echo "Couldn't install fastfetch — install it manually once pacman is free, then rerun this script."
+else
+  echo "already installed, skipping"
+fi
+
+echo "=== 12/12: btop ==="
+if ! command -v btop &> /dev/null; then
+  pacman_run -S --needed --noconfirm btop || echo "Couldn't install btop — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi
@@ -595,19 +592,18 @@ touch "$HOME/.zshrc"
 if grep -qF "$MARK" "$HOME/.zshrc"; then
   sed -i "/^${MARK}\$/,/^${MARK_END}\$/d" "$HOME/.zshrc"
 fi
-# Belt-and-suspenders: the managed block above (regenerated in full every
-# run) already covers a nerdfetch line added inside it, but strip any bare
-# `nerdfetch` invocation line left outside that block too, in case one was
-# ever added by hand — so re-running never ends up with two calls to it.
-sed -i '/^[[:space:]]*nerdfetch[[:space:]]*$/d' "$HOME/.zshrc"
-# A pre-existing fastfetch/neofetch invocation (from the user's own prior
-# setup, not this script's) would otherwise print its own system-info
-# banner right alongside nerdfetch's on every new shell. Comment it out
-# rather than deleting it, so it's disabled but the user can still see it
-# was there and restore it by hand if they want. Idempotent: a line already
-# commented no longer starts with the bare command name, so it won't match
-# again on a rerun.
-sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
+# fastfetch is this script's own tool now (nerdfetch was dropped in favor
+# of it), so a pre-existing neofetch invocation, or a *stray* fastfetch/
+# nerdfetch call left outside the managed block (e.g. from before this
+# script switched away from nerdfetch), would otherwise print an extra
+# banner alongside the one the managed block below already adds. Comment
+# it out rather than deleting it, so it's disabled but the user can still
+# see it was there and restore it by hand if they want. Idempotent: a line
+# already commented no longer starts with the bare command name, so it
+# won't match again on a rerun. Note this is separate from CachyOS's own
+# fastfetch invocation in its fish config (fish_greeting) — that's a
+# different shell's config file entirely, untouched here.
+sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch|nerdfetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
 # CachyOS's own default .zshrc (from the cachyos-zsh-config package) ships
 # Powerlevel10k, including its instant-prompt block right at the top of the
 # file — both it and oh-my-posh (below) hook zsh's own prompt-drawing
@@ -683,7 +679,7 @@ alias cat='bat'
 
 export FZF_DEFAULT_OPTS='--color=fg:$C_FG,bg:$C_BG,hl:$C_PURPLE --color=fg+:$C_FG,bg+:$C_MUTED,hl+:$C_PURPLE --color=info:$C_ORANGE,prompt:$C_GREEN,pointer:$C_PINK --color=marker:$C_PINK,spinner:$C_ORANGE,header:$C_MUTED'
 
-command -v nerdfetch &> /dev/null && nerdfetch
+command -v fastfetch &> /dev/null && fastfetch
 $MARK_END
 EOF
 
@@ -709,7 +705,7 @@ done
 if [ -n "$SYS_ZSH_HIT" ]; then
   echo "Found Powerlevel10k/fastfetch references in system-wide zsh config: $SYS_ZSH_HIT"
   echo "These are shared by every user on this machine, so this script won't touch them automatically."
-  echo "If oh-my-posh's prompt still conflicts with Powerlevel10k after this run, comment out the matching lines there by hand."
+  echo "If oh-my-posh's prompt still conflicts with Powerlevel10k, or fastfetch prints twice on a new shell, comment out the matching lines there by hand."
 fi
 
 echo "=== setting zsh as default shell ==="
@@ -732,9 +728,10 @@ All done. Next steps:
      \`z\`/\`zi\` (learns your most-used directories).
   6. tmux is set to the $THEME theme (~/.tmux.conf) — start a session with
      tmux.
-  7. nerdfetch runs automatically at the end of a new shell (uses your
-     Nerd Font icons — install it manually from
-     https://github.com/ThatOneCalculator/NerdFetch if the fetch above failed).
-  8. Want a different font or theme? Just rerun this script — it'll prompt
+  7. fastfetch runs automatically at the end of a new shell (uses your
+     Nerd Font icons — install it manually once pacman is free if the
+     install above failed).
+  8. btop is installed for a resource monitor — launch it with: btop
+  9. Want a different font or theme? Just rerun this script — it'll prompt
      again and replace the old config.
 EOF

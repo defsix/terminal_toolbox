@@ -1,6 +1,6 @@
 # One-stop terminal setup for Windows (PowerShell)
-# oh-my-posh, Nerd Font, lsd, bat, fzf, zoxide, superfile, fastfetch — pick
-# your font and theme below (8 themes, all real premade oh-my-posh prompts fetched
+# oh-my-posh, Nerd Font, lsd, bat, fzf, zoxide, superfile, fastfetch, btop —
+# pick your font and theme below (8 themes, all real premade oh-my-posh prompts fetched
 # unmodified from upstream: Dracula, M365Princess, Atomic, Catppuccin,
 # Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko).
 #
@@ -154,13 +154,13 @@ switch ($Theme) {
   }
 }
 
-Section "1/9: winget check"
+Section "1/10: winget check"
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
   Write-Host "winget not found. Install 'App Installer' from the Microsoft Store, then re-run this script." -ForegroundColor Red
   exit 1
 }
 
-Section "2/9: oh-my-posh"
+Section "2/10: oh-my-posh"
 if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
   winget install --id JanDeDobbeleer.OhMyPosh -s winget --accept-source-agreements --accept-package-agreements
   # winget installs to a versioned folder; refresh PATH for the rest of this session
@@ -211,7 +211,7 @@ if (-not (Test-Path $ThemePath)) {
   Write-Host "already present, skipping"
 }
 
-Section "3/9: lsd"
+Section "3/10: lsd"
 if (-not (Get-Command lsd -ErrorAction SilentlyContinue)) {
   winget install --id lsd-rs.lsd -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -219,7 +219,7 @@ if (-not (Get-Command lsd -ErrorAction SilentlyContinue)) {
   Write-Host "already installed, skipping"
 }
 
-Section "4/9: bat"
+Section "4/10: bat"
 if (-not (Get-Command bat -ErrorAction SilentlyContinue)) {
   winget install --id sharkdp.bat -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -240,7 +240,7 @@ if ((Get-Command bat -ErrorAction SilentlyContinue) -and $BatThemeUrl) {
   }
 }
 
-Section "5/9: fzf"
+Section "5/10: fzf"
 if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
   winget install --id junegunn.fzf -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -248,7 +248,7 @@ if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
   Write-Host "already installed, skipping"
 }
 
-Section "6/9: zoxide"
+Section "6/10: zoxide"
 if (-not (Get-Command zoxide -ErrorAction SilentlyContinue)) {
   winget install --id ajeetdsouza.zoxide -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -256,7 +256,7 @@ if (-not (Get-Command zoxide -ErrorAction SilentlyContinue)) {
   Write-Host "already installed, skipping"
 }
 
-Section "7/9: superfile"
+Section "7/10: superfile"
 if (-not (Get-Command spf -ErrorAction SilentlyContinue)) {
   winget install --id yorukot.superfile -e --accept-source-agreements --accept-package-agreements
   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -345,7 +345,7 @@ if (Test-Path $SpfConfig) {
   Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = `"$Theme`" in its config.toml (run 'spf path-list' to find the exact path)."
 }
 
-Section "8/9: fastfetch"
+Section "8/10: fastfetch"
 # nerdfetch (used on the Linux/Termux scripts) explicitly doesn't support
 # Windows at all — its own project excludes it, even under Git Bash — so
 # this is fastfetch instead, which does have a real winget package.
@@ -356,7 +356,19 @@ if (-not (Get-Command fastfetch -ErrorAction SilentlyContinue)) {
   Write-Host "already installed, skipping"
 }
 
-Section "9/9: PowerShell profile"
+Section "9/10: btop"
+# The original btop (Linux/macOS/BSD) has no native Windows build at all —
+# btop4win is a separate, actively maintained Windows port of the same
+# project, not a recolor/fork of unrelated code. Its winget package installs
+# a `btop` command alias alongside the btop4win.exe binary itself.
+if (-not (Get-Command btop -ErrorAction SilentlyContinue)) {
+  winget install --id aristocratos.btop4win -e --accept-source-agreements --accept-package-agreements
+  $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+} else {
+  Write-Host "already installed, skipping"
+}
+
+Section "10/10: PowerShell profile"
 $CurrentUserPolicy = Get-ExecutionPolicy -Scope CurrentUser
 if ($CurrentUserPolicy -eq "Undefined" -or $CurrentUserPolicy -eq "Restricted") {
   # `Set-ExecutionPolicy Bypass -Scope Process` (per the Usage note above)
@@ -436,4 +448,5 @@ Write-Host "  5. bat is set to the $Theme theme (`$env:BAT_THEME); fzf uses the 
 Write-Host "  6. tmux doesn't run natively on Windows. Want it (with a Dracula theme)? Use WSL (wsl --install) and run setup-ubuntu.sh inside it."
 Write-Host "  7. Want real zsh too? Same answer: WSL (wsl --install) and run setup-ubuntu.sh inside it."
 Write-Host "  8. fastfetch is set up and runs automatically at the end of a new PowerShell window (nerdfetch, used on the Linux/Termux scripts, doesn't support Windows at all - fastfetch is the equivalent here)."
-Write-Host "  9. Want a different font or theme? Just rerun this script — it'll prompt again and replace the old config."
+Write-Host "  9. btop is installed (as btop4win, the Windows port) for a resource monitor - launch it with: btop"
+Write-Host "  10. Want a different font or theme? Just rerun this script — it'll prompt again and replace the old config."

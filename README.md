@@ -4,10 +4,10 @@ One-stop scripts to provision a terminal with zsh (or PowerShell), a Nerd
 Font, [Oh My Zsh](https://ohmyz.sh), [Oh My Posh](https://ohmyposh.dev),
 [lsd](https://github.com/lsd-rs/lsd), [bat](https://github.com/sharkdp/bat),
 [fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
-[tmux](https://github.com/tmux/tmux), [Superfile](https://superfile.dev), and a
-system-info fetch tool — [nerdfetch](https://github.com/ThatOneCalculator/NerdFetch)
-on Linux/Termux, [fastfetch](https://github.com/fastfetch-cli/fastfetch) on
-Windows (nerdfetch doesn't support Windows at all).
+[tmux](https://github.com/tmux/tmux), [Superfile](https://superfile.dev),
+[fastfetch](https://github.com/fastfetch-cli/fastfetch) (a system-info fetch
+tool), and [btop](https://github.com/aristocratos/btop) (a resource monitor —
+[btop4win](https://github.com/aristocratos/btop4win) is the Windows port).
 
 Run one interactively and it opens with a picker — 10 Nerd Fonts, 8 themes
 (Dracula, M365Princess, Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer,
@@ -103,13 +103,13 @@ pick up changes.
 - zoxide, a learning `cd` — `z`/`zi` jump to frecently-used directories
 - tmux, themed status bar (Linux/Termux only — no native Windows port; use WSL)
 - Superfile (`spf`), themed to match
-- A system-info fetch tool runs automatically at the end of a new shell:
-  [nerdfetch](https://github.com/ThatOneCalculator/NerdFetch) on
-  Linux/Termux (it doesn't support Windows at all, even under Git Bash),
-  [fastfetch](https://github.com/fastfetch-cli/fastfetch) on Windows
-  instead. Either script comments out (never deletes) a pre-existing
-  fastfetch/neofetch invocation it finds in your shell config, so it
-  doesn't fight with the new one for stdout on every prompt.
+- [fastfetch](https://github.com/fastfetch-cli/fastfetch) runs automatically
+  at the end of a new shell on every platform (Windows uses the same tool
+  too). Every script comments out (never deletes) a pre-existing
+  fastfetch/neofetch invocation it finds in your shell config, so it doesn't
+  fight with the new one for stdout on every prompt.
+- [btop](https://github.com/aristocratos/btop) (`btop4win` on Windows), a
+  resource monitor — launch it with `btop`
 
 ## Themes
 
@@ -450,3 +450,29 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   clobbering any of them — confirmed by checking `$precmd_functions`
   after loading it. Same "delete the block to go back to stock behavior"
   philosophy as everything else here.
+- **Replaced nerdfetch with fastfetch on all platforms, and added btop.**
+  fastfetch is now the system-info fetch tool everywhere (previously
+  Windows-only, with nerdfetch on Linux/Termux/CachyOS) — one tool across
+  every script instead of two. `setup-ubuntu.sh` tries `apt install
+  fastfetch` first (only recent Ubuntu 25.04+/Debian 13+ ship it there)
+  and falls back to the matching GitHub release `.deb`
+  (`fastfetch-linux-amd64.deb`/`fastfetch-linux-aarch64.deb`, matched via
+  `dpkg --print-architecture`) on older releases, including current
+  Raspberry Pi OS/Debian 12 — fastfetch's own releases don't publish a
+  32-bit ARM (`armhf`) build at all, so a 32-bit Pi without it already in
+  apt has no fallback here short of building from source. `setup-termux.sh`
+  and `setup-cachyos.sh` both have real packages (`pkg install fastfetch`,
+  `pacman -S fastfetch`), no fallback needed. The pre-existing
+  fastfetch/neofetch comment-out pass now also matches a stray `nerdfetch`
+  line left outside the managed block (from before this switch), so
+  migrating an existing install never ends up printing two banners.
+  btop (a resource monitor) is added alongside it on every platform —
+  `apt`/`pkg`/`pacman install btop` on the three bash-based scripts,
+  `winget install --id aristocratos.btop4win` on Windows (the original
+  btop has no native Windows build; btop4win is a separate, actively
+  maintained Windows port of the same project, not a recolor of unrelated
+  code — its winget package installs a `btop` command alias). Verified
+  with mocked `pacman`/`apt`/`dpkg`/`curl` across the direct-install,
+  GitHub-`.deb`-fallback, and unsupported-architecture paths, plus a
+  migration test confirming an old bare `nerdfetch` line gets commented
+  out cleanly on rerun.
