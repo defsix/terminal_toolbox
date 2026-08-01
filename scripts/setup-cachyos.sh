@@ -249,6 +249,16 @@ if [ -f "$HOME/.zshrc" ] && grep -q "oh-my-zsh.sh" "$HOME/.zshrc"; then
   fi
   # oh-my-posh (below) draws the prompt, so the Oh My Zsh theme is just dead weight if left on.
   sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/' "$HOME/.zshrc"
+  # Some distros (confirmed on CachyOS) ship a system-wide Oh My Zsh install
+  # and export $ZSH_CUSTOM globally (e.g. from /etc/zsh/zshenv) to point at
+  # it — that inherited env var wins over Oh My Zsh's own
+  # `${ZSH_CUSTOM:-$ZSH/custom}` fallback regardless of what $ZSH itself is
+  # set to, so the plugins cloned above (into $HOME/.oh-my-zsh/custom) get
+  # silently reported as "not found" at runtime even though they're right
+  # there on disk. Force ZSH_CUSTOM back to where we actually cloned them.
+  if ! grep -q '^export ZSH_CUSTOM=' "$HOME/.zshrc"; then
+    sed -i '/^ZSH_THEME=""$/a export ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"' "$HOME/.zshrc"
+  fi
 elif [ -f "$HOME/.zshrc" ]; then
   # KEEP_ZSHRC left an existing .zshrc untouched, so Oh My Zsh was never
   # actually wired in (no `source .../oh-my-zsh.sh` line) — bootstrap it
@@ -259,6 +269,7 @@ elif [ -f "$HOME/.zshrc" ]; then
 
 $MARK_OMZ
 export ZSH="\$HOME/.oh-my-zsh"
+export ZSH_CUSTOM="\$HOME/.oh-my-zsh/custom"
 ZSH_THEME=""
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting fzf)
 source "\$ZSH/oh-my-zsh.sh"

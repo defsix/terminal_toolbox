@@ -369,3 +369,17 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   `pacman` that fails a controlled number of times before succeeding (both
   the eventually-succeeds and the gives-up-after-5-attempts paths), and a
   full script run where every install step hits one transient failure.
+- **Fixed (found via a real CachyOS run):** after a successful
+  `setup-cachyos.sh` run, opening a new shell reported
+  `[oh-my-zsh] plugin 'zsh-autosuggestions' not found` (and the same for
+  `zsh-syntax-highlighting`), even though both were genuinely cloned into
+  `~/.oh-my-zsh/custom/plugins/`. CachyOS ships a system-wide Oh My Zsh
+  install and exports `$ZSH_CUSTOM` globally (pointing at that shared
+  location) — that inherited env var wins over Oh My Zsh's own
+  `${ZSH_CUSTOM:-$ZSH/custom}` fallback regardless of what `$ZSH` itself
+  is set to, so the plugins we cloned went silently unfound. All three
+  scripts now explicitly `export ZSH_CUSTOM` in `.zshrc`, forcing it back
+  to where the plugins actually are. Reproduced by exporting `ZSH_CUSTOM`
+  to a bogus path and starting a real zsh session (got the exact same
+  "not found" errors), then confirmed the fix resolves it under the same
+  simulated override, with idempotency verified across reruns.

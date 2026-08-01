@@ -428,6 +428,34 @@ anyone who wants real zsh on Windows.
   before succeeding (confirmed both the eventually-succeeds path and the
   gives-up-after-5-attempts path in isolation), plus a full script run
   where every install step hit one transient failure before succeeding.
+- **`$ZSH_CUSTOM` must be set explicitly in `.zshrc`, not left to Oh My
+  Zsh's own default — found via a real CachyOS run:** after a fully
+  successful `setup-cachyos.sh` run, a new shell reported
+  `[oh-my-zsh] plugin 'zsh-autosuggestions' not found` (and the same for
+  `zsh-syntax-highlighting`), even though `ls ~/.oh-my-zsh/custom/plugins/`
+  showed both genuinely cloned there. Root cause: CachyOS ships a
+  system-wide Oh My Zsh install and exports `$ZSH_CUSTOM` globally
+  (confirmed live: `echo $ZSH_CUSTOM` in a fresh shell printed
+  `/usr/share/oh-my-zsh/custom`, not `$ZSH/custom`) — likely from
+  `/etc/zsh/zshenv` or similar, sourced before `~/.zshrc` ever runs. Oh My
+  Zsh's own internal default is `ZSH_CUSTOM=${ZSH_CUSTOM:-$ZSH/custom}` —
+  since the env var arrives already set, that fallback never triggers, so
+  it keeps pointing at the system location regardless of what `$ZSH` is
+  set to in `~/.zshrc`. The bash script's own clone step was never
+  affected (its `ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"`
+  correctly fell back and cloned to the right place, since the *script's*
+  process didn't inherit the override in this case) — only the later
+  *zsh* runtime was. Fixed by explicitly adding
+  `export ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"` to the generated
+  `.zshrc` right after `export ZSH=`, in both the "patch Oh My Zsh's own
+  template" branch and the "bootstrap our own block" branch, on all three
+  bash-based scripts (Ubuntu and Termux don't ship a system-wide Oh My Zsh
+  and so weren't confirmed broken, but the fix is harmless and cheap
+  insurance against any other distro/setup that does the same thing).
+  Reproduced by exporting `ZSH_CUSTOM` to a bogus path and starting a real
+  `zsh -i` session against the old script's generated `.zshrc` (got the
+  identical "not found" errors), then confirmed the fix resolves it under
+  the same simulated override, with idempotency verified across reruns.
 
 ## Testing notes
 
