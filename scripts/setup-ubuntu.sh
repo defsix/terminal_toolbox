@@ -575,28 +575,41 @@ echo "=== 11/12: fastfetch ==="
 # installs) need the GitHub release .deb instead, matched to architecture
 # the same way the font/oh-my-posh steps do. fastfetch's own releases only
 # publish amd64/aarch64 .deb assets — no 32-bit ARM (armhf) build — so a
-# 32-bit Raspberry Pi without it already in apt has no fallback here short
-# of building from source.
-if ! command -v fastfetch &> /dev/null; then
-  if ! sudo apt install -y fastfetch; then
-    echo "Not available via apt on this release — falling back to the GitHub release .deb."
-    ARCH="$(dpkg --print-architecture)"
-    FASTFETCH_DEB=""
-    case "$ARCH" in
-      amd64) FASTFETCH_DEB="fastfetch-linux-amd64.deb" ;;
-      arm64) FASTFETCH_DEB="fastfetch-linux-aarch64.deb" ;;
-    esac
-    if [ -n "$FASTFETCH_DEB" ] && curl -fsSL "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$FASTFETCH_DEB" \
-         -o /tmp/fastfetch.deb && [ -s /tmp/fastfetch.deb ]; then
-      sudo apt install -y /tmp/fastfetch.deb || echo "Couldn't install the downloaded fastfetch .deb — skipping. Install manually from https://github.com/fastfetch-cli/fastfetch"
-      rm -f /tmp/fastfetch.deb
-    else
-      rm -f /tmp/fastfetch.deb
-      echo "No fastfetch .deb available for architecture $ARCH — skipping. Install manually from https://github.com/fastfetch-cli/fastfetch"
-    fi
-  fi
-else
+# 32-bit Raspberry Pi without it already in apt has no direct fallback here
+# short of building from source. Rather than leave those installs with no
+# system-info tool at all, fall back to neofetch (a plain,
+# architecture-independent shell/Python script, packaged for effectively
+# everything) whenever fastfetch can't be installed by either path.
+FASTFETCH_OK=0
+if command -v fastfetch &> /dev/null; then
   echo "already installed, skipping"
+  FASTFETCH_OK=1
+elif sudo apt install -y fastfetch; then
+  FASTFETCH_OK=1
+else
+  echo "Not available via apt on this release — falling back to the GitHub release .deb."
+  ARCH="$(dpkg --print-architecture)"
+  FASTFETCH_DEB=""
+  case "$ARCH" in
+    amd64) FASTFETCH_DEB="fastfetch-linux-amd64.deb" ;;
+    arm64) FASTFETCH_DEB="fastfetch-linux-aarch64.deb" ;;
+  esac
+  if [ -n "$FASTFETCH_DEB" ] && curl -fsSL "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/$FASTFETCH_DEB" \
+       -o /tmp/fastfetch.deb && [ -s /tmp/fastfetch.deb ]; then
+    sudo apt install -y /tmp/fastfetch.deb && FASTFETCH_OK=1
+    rm -f /tmp/fastfetch.deb
+  else
+    rm -f /tmp/fastfetch.deb
+    echo "No fastfetch .deb available for architecture $ARCH."
+  fi
+fi
+if [ "$FASTFETCH_OK" -eq 0 ]; then
+  echo "fastfetch isn't available on this system — falling back to neofetch instead."
+  if command -v neofetch &> /dev/null; then
+    echo "neofetch already installed, skipping"
+  else
+    sudo apt install -y neofetch || echo "Couldn't install neofetch either — skipping. Install a system-info tool manually."
+  fi
 fi
 
 echo "=== 12/12: btop ==="
@@ -666,7 +679,7 @@ alias cat='bat'
 
 export FZF_DEFAULT_OPTS='--color=fg:$C_FG,bg:$C_BG,hl:$C_PURPLE --color=fg+:$C_FG,bg+:$C_MUTED,hl+:$C_PURPLE --color=info:$C_ORANGE,prompt:$C_GREEN,pointer:$C_PINK --color=marker:$C_PINK,spinner:$C_ORANGE,header:$C_MUTED'
 
-command -v fastfetch &> /dev/null && fastfetch
+command -v fastfetch &> /dev/null && fastfetch || { command -v neofetch &> /dev/null && neofetch; }
 $MARK_END
 EOF
 
@@ -691,8 +704,8 @@ All done. Next steps:
   6. tmux is set to the $THEME theme (~/.tmux.conf) — start a session with
      tmux.
   7. fastfetch runs automatically at the end of a new shell (uses your
-     Nerd Font icons — install it manually from
-     https://github.com/fastfetch-cli/fastfetch if the install above failed).
+     Nerd Font icons — falls back to neofetch on architectures fastfetch
+     doesn't publish a build for, e.g. 32-bit ARM/armhf).
   8. btop is installed for a resource monitor — launch it with: btop
   9. Want a different font or theme? Just rerun this script — it'll prompt
      again and replace the old config.

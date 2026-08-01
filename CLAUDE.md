@@ -380,9 +380,12 @@ anyone who wants real zsh on Windows.
   own tool everywhere now, installed via `apt` (with a GitHub `.deb`
   fallback matched by `dpkg --print-architecture` for older Ubuntu/Debian/
   current Raspberry Pi OS — fastfetch publishes no `armhf`/32-bit-ARM
-  asset at all, so a 32-bit Pi without it in `apt` has no fallback here),
-  `pkg` (Termux), `pacman` (CachyOS), and the existing winget install
-  (Windows, unchanged). The fastfetch/neofetch comment-out regex on the
+  asset at all, confirmed on a real Raspberry Pi 3, so `setup-ubuntu.sh`
+  falls back once more to `neofetch` there, a plain architecture-
+  independent script packaged for effectively everything; the end-of-shell
+  invocation tries fastfetch then neofetch then does nothing, verified
+  across all three outcomes with a mocked `apt`), `pkg` (Termux), `pacman`
+  (CachyOS), and the existing winget install (Windows, unchanged). The fastfetch/neofetch comment-out regex on the
   three bash scripts now also matches a stray `nerdfetch` line left
   outside the managed block, so an existing install migrates cleanly
   (verified: an old bare `nerdfetch` line gets commented out on rerun,

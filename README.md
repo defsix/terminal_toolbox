@@ -496,3 +496,14 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   broken package did: confirmed the script now continues when the wanted
   packages are all actually present, and still exits with a clear message
   when one is genuinely missing.
+- **Added a neofetch fallback for `setup-ubuntu.sh`'s fastfetch step**, for
+  architectures fastfetch has no build for at all (32-bit ARM/`armhf` —
+  confirmed on a real Raspberry Pi 3). Whenever fastfetch can't be
+  installed by either the apt or GitHub-`.deb` path, the script now falls
+  back to `apt install neofetch` (a plain, architecture-independent
+  script, packaged for effectively everything) instead of leaving the
+  install with no system-info tool at all. The end-of-shell invocation
+  tries fastfetch first, then neofetch, then silently does nothing if
+  neither is present — verified with a mocked `apt` across all three
+  outcomes (fastfetch installs, fastfetch fails but neofetch succeeds,
+  both fail) confirming each exits cleanly without ever going fatal.
