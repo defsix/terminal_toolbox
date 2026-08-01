@@ -623,6 +623,24 @@ sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$H
 sed -i -E '/p10k-instant-prompt/,/^#?[[:space:]]*fi$/{/^#/!s/^/# /}' "$HOME/.zshrc"
 sed -i -E '/^[^#]*\bpowerlevel10k\.zsh-theme\b/s/^/# /' "$HOME/.zshrc"
 sed -i -E '/^[^#]*\bp10k\.zsh\b/s/^/# /' "$HOME/.zshrc"
+# Commenting out the *source* line above isn't enough on its own: if P10k's
+# instant-prompt ever ran even once before this script's fix existed (e.g.
+# CachyOS's default .zshrc sourced it on the very first real zsh login this
+# script's own `chsh` caused, before this script learned to disable it),
+# P10k auto-launches its own `p10k configure` wizard and writes a real,
+# populated ~/.p10k.zsh — which on its own spins up a persistent gitstatus
+# daemon and worker process that keep running independently of anything in
+# .zshrc, including across `.zshrc` edits and even across closing the
+# terminal (they're deliberately designed to survive shell restarts for
+# speed). Disable the config file itself too — renamed, not deleted, same
+# restore-by-hand philosophy as the comment-out passes above — and kill any
+# already-running instance so a stale one can't keep feeding a corrupted
+# prompt into whatever terminal it originally inherited as its tty.
+if [ -f "$HOME/.p10k.zsh" ]; then
+  mv "$HOME/.p10k.zsh" "$HOME/.p10k.zsh.disabled-by-terminal-toolbox"
+fi
+pkill -f gitstatusd 2>/dev/null || true
+pkill -f p10k.worker 2>/dev/null || true
 cat >> "$HOME/.zshrc" << EOF
 
 $MARK
