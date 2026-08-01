@@ -41,6 +41,15 @@ bash <(curl -fsSL https://raw.githubusercontent.com/defsix/terminal_toolbox/main
 ```
 bash scripts/setup-cachyos.sh
 ```
+CachyOS defaults to fish, not bash — fish doesn't understand `<(...)`
+process substitution at all (it fails immediately with "Invalid
+redirection target"), so the one-liner needs fish's own equivalent,
+`psub`, instead:
+```fish
+bash (curl -fsSL https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-cachyos.sh | psub)
+```
+If you're already in bash/zsh (e.g. over SSH with a forced shell, or after
+`chsh`), the same form as Ubuntu above works too:
 ```
 bash <(curl -fsSL https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-cachyos.sh)
 ```
@@ -336,3 +345,13 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   Arch package and this repo otherwise never needs an AUR helper. Verified
   with a PTY harness mocking `pacman` across two font/theme combinations,
   confirming the expected `pacman` calls and full idempotency on rerun.
+- **Fixed (found via a real CachyOS run):** the CachyOS one-liner in this
+  README used bash's `bash <(curl ...)` process-substitution form, but
+  CachyOS defaults to fish, which doesn't understand `<(...)` at all —
+  it fails immediately with "Invalid redirection target" before `curl`
+  ever runs. Reproduced the exact error locally (installed real fish,
+  same error message and caret position) and confirmed fish's own
+  process-substitution equivalent, `psub`, fixes it:
+  `bash (curl -fsSL <url> | psub)`. The README now shows the fish form
+  first for this platform, with the bash/zsh form underneath for anyone
+  who already switched shells.

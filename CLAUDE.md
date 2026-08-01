@@ -395,7 +395,14 @@ anyone who wants real zsh on Windows.
   is fundamentally "zsh + Oh My Zsh", not "whatever the distro defaults
   to"), just with a one-line note in the shell-switch message explaining
   what it's actually switching *from*, since that's a real departure from
-  what Ubuntu/Debian users would expect as their prior default. Tested
+  what Ubuntu/Debian users would expect as their prior default. That same
+  fish default broke the README's one-liner for this platform in
+  practice: fish doesn't understand bash's `<(...)` process substitution
+  at all and fails immediately with "Invalid redirection target" before
+  `curl` ever runs — found via a real CachyOS run, reproduced locally by
+  actually installing fish rather than assuming, and fixed by using
+  fish's own equivalent, `psub` (`bash (curl -fsSL <url> | psub)`), as the
+  primary form in the README for this platform. Tested
   with a PTY harness mocking `pacman` (and `sudo`, wrapped to just `exec`
   the command directly through the test's own isolated `PATH` rather than
   fighting sudo's `secure_path`, which would otherwise ignore the mock)
