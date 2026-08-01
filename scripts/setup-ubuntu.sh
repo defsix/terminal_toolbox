@@ -603,6 +603,15 @@ export PATH="\$HOME/.local/bin:\$PATH"
 eval "\$(oh-my-posh init zsh --config \$HOME/.poshthemes/${THEME}.omp.json)"
 eval "\$(zoxide init zsh)"
 
+# Some oh-my-posh themes render prompts back-to-back with no blank line
+# between them. Add one via a precmd hook rather than editing the theme
+# file itself, since every theme here is fetched unmodified from upstream —
+# no exceptions, even for spacing. Remove this block to go back to the
+# theme's stock spacing.
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _terminal_toolbox_blank_line
+_terminal_toolbox_blank_line() { print }
+
 alias ls='lsd'
 alias ll='lsd -l'
 alias la='lsd -la'

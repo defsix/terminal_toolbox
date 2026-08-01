@@ -532,6 +532,15 @@ anyone who wants real zsh on Windows.
   to the still-dying old session instead of a genuinely fresh one — a
   Konsole/KDE timing quirk unrelated to this script, worked around by
   waiting a few seconds before relaunching.
+- Blank line between prompts: some oh-my-posh themes render back-to-back
+  prompts with no vertical spacing at all. Deliberately not fixed by
+  editing the theme JSON (breaks the "every theme fetched unmodified from
+  upstream, no exceptions" rule) — instead all three bash-based scripts
+  register a `precmd` hook (`_terminal_toolbox_blank_line`, via
+  `add-zsh-hook` so it doesn't clobber oh-my-posh's/oh-my-zsh's/plugins'
+  own precmd hooks) in the managed `.zshrc` block that just prints a blank
+  line before each prompt. Confirmed via `$precmd_functions` that it
+  registers alongside the others rather than replacing any of them.
 
 ## Testing notes
 

@@ -438,3 +438,15 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   a genuinely fresh terminal (not a reused, already-P10k-loaded tab) shows
   a clean single oh-my-posh prompt with no instant-prompt error and no
   configure-wizard prompt.
+- **Added a blank line between prompts.** Some oh-my-posh themes render
+  back-to-back prompts with no vertical spacing, which can look cramped.
+  Rather than edit any of the 8 theme files to add it (this repo's themes
+  are fetched unmodified from upstream — no exceptions, even for spacing),
+  all three bash-based scripts now register a small `precmd` hook
+  (`_terminal_toolbox_blank_line`) in the managed `.zshrc` block, right
+  after the oh-my-posh/zoxide `eval` lines, that just prints a blank line
+  before each new prompt. Uses `add-zsh-hook` so it registers alongside
+  oh-my-posh's, oh-my-zsh's, and the plugin's own precmd hooks without
+  clobbering any of them — confirmed by checking `$precmd_functions`
+  after loading it. Same "delete the block to go back to stock behavior"
+  philosophy as everything else here.
