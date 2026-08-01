@@ -383,3 +383,32 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   to a bogus path and starting a real zsh session (got the exact same
   "not found" errors), then confirmed the fix resolves it under the same
   simulated override, with idempotency verified across reruns.
+- **Fixed (found via a real CachyOS run, reported as "that doesn't fix it
+  entirely" after the `ZSH_CUSTOM` fix above):** a live Powerlevel10k
+  instant-prompt error (`prompt_cr must be unset`) plus the shell's own
+  banner rendering twice. Root cause: CachyOS's own default `~/.zshrc`
+  (shipped by the `cachyos-zsh-config` package — confirmed by fetching it
+  from `CachyOS/cachyos-zsh-config` upstream) ships Powerlevel10k, wired in
+  via an instant-prompt guard block at the very top of the file plus
+  `source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme` and
+  `source ~/.p10k.zsh` further down — none of which our script touched
+  before, since it only manages its own marked block and appends after.
+  P10k and oh-my-posh both hook zsh's own prompt-drawing internals, and
+  having both active at once is exactly what produces P10k's own
+  "prompt_cr must be unset" error. All three scripts now give P10k's
+  instant-prompt block and theme/config source lines the same
+  comment-don't-delete treatment as the existing fastfetch/neofetch
+  handling — disabled, not removed, so the user can restore it by hand.
+  The instant-prompt block's closing `fi` is matched as either `fi` or
+  `# fi` so a rerun's `sed` range still finds the (now-commented) end of
+  the block instead of running off the end of the file. Verified against
+  the real upstream `cachyos-zsh-config` file: instant-prompt block, theme
+  source, and `~/.p10k.zsh` source all get commented out on the first run,
+  everything else in the file (oh-my-zsh sourcing, aliases, other plugin
+  sources) is untouched, and a second run makes no further changes.
+  `setup-cachyos.sh` additionally now checks (read-only — it never edits
+  these) whether `/etc/zsh/{zshrc,zshenv,zprofile,zlogin}` reference P10k
+  or fastfetch, and prints a warning pointing at the specific file(s) if
+  so, since those are shared system-wide config rather than the user's own
+  dotfile and editing them automatically would affect every account on the
+  machine, not just the one running this script.

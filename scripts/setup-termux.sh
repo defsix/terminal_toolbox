@@ -604,6 +604,14 @@ sed -i '/^[[:space:]]*nerdfetch[[:space:]]*$/d' "$HOME/.zshrc"
 # commented no longer starts with the bare command name, so it won't match
 # again on a rerun.
 sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
+# Same Powerlevel10k-vs-oh-my-posh prompt conflict handling as the other two
+# scripts — see setup-ubuntu.sh's comment above this same sed pass for the
+# full explanation (P10k's instant-prompt block hooks zsh prompt internals
+# the same way oh-my-posh below does, producing P10k's own "prompt_cr must
+# be unset" error when both are active).
+sed -i -E '/p10k-instant-prompt/,/^#?[[:space:]]*fi$/{/^#/!s/^/# /}' "$HOME/.zshrc"
+sed -i -E '/^[^#]*\bpowerlevel10k\.zsh-theme\b/s/^/# /' "$HOME/.zshrc"
+sed -i -E '/^[^#]*\bp10k\.zsh\b/s/^/# /' "$HOME/.zshrc"
 cat >> "$HOME/.zshrc" << EOF
 
 $MARK

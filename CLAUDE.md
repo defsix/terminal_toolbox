@@ -456,6 +456,48 @@ anyone who wants real zsh on Windows.
   `zsh -i` session against the old script's generated `.zshrc` (got the
   identical "not found" errors), then confirmed the fix resolves it under
   the same simulated override, with idempotency verified across reruns.
+- **Powerlevel10k fights oh-my-posh for the prompt on CachyOS — found via a
+  real CachyOS run, reported after the `$ZSH_CUSTOM` fix above as "that
+  doesn't fix it entirely":** a live P10k instant-prompt error
+  (`[ERROR]: When using Powerlevel10k with instant prompt, prompt_cr must
+  be unset.`) plus the shell banner rendering twice on every new terminal.
+  The user's own `~/.zshrc` had neither `p10k` nor `powerlevel10k` in it
+  (confirmed via `grep`), which was the key clue: CachyOS's *default*
+  `~/.zshrc`, shipped by the `cachyos-zsh-config` package (fetched and
+  read verbatim from `CachyOS/cachyos-zsh-config` upstream to confirm,
+  rather than guessing), hardcodes Powerlevel10k — a P10k instant-prompt
+  guard block right at the top of the file (`if [[ -r
+  ".../p10k-instant-prompt-*.zsh" ]]; then source ...; fi`), then later
+  `source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme` and
+  `[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh`. None of that is inside
+  the `# >>> custom terminal setup >>>` marker our scripts manage, so our
+  strip-and-reappend logic never touched it — it just sat there,
+  co-active with oh-my-posh. Both P10k and oh-my-posh hook zsh's own
+  prompt-drawing internals; having both live at once is exactly what
+  produces P10k's "prompt_cr must be unset" error. Fixed with the same
+  comment-don't-delete treatment already used for fastfetch/neofetch: a
+  `sed` range comments out the instant-prompt guard block, and two more
+  `sed` passes comment out any line sourcing `powerlevel10k.zsh-theme` or
+  `~/.p10k.zsh` — on all three bash-based scripts, not just CachyOS's,
+  since a user could have P10k configured by hand anywhere. The range's
+  end pattern matches either `fi` or `# fi` specifically so a rerun's `sed`
+  range still finds a (now-commented) closing line instead of running off
+  the end of the file and commenting out everything below it — a plain
+  `^fi$` end-pattern would stop matching after the first run, since by
+  then the real closing line reads `# fi`, not `fi`. Verified against the
+  real upstream `cachyos-config.zsh` file end-to-end (via the script's own
+  extracted `.zshrc`-configuration section, not just the sed lines in
+  isolation): the instant-prompt block and both theme/config source lines
+  get commented out on the first run, everything else in the file (system
+  Oh My Zsh sourcing, aliases, other plugin sources) is left untouched,
+  and a second run makes no further changes to any of it. Deliberately did
+  *not* extend this to `/etc/zsh/*` (CachyOS's actual system-wide zsh
+  files, shared by every account on the machine) — `setup-cachyos.sh`
+  only greps those for P10k/fastfetch references and warns with the exact
+  file path if found, since silently patching shared system config from a
+  per-user provisioning script is a materially bigger blast radius than
+  editing `~/.zshrc` and warrants the user's own explicit action, not an
+  automatic edit.
 
 ## Testing notes
 

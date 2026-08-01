@@ -608,6 +608,21 @@ sed -i '/^[[:space:]]*nerdfetch[[:space:]]*$/d' "$HOME/.zshrc"
 # commented no longer starts with the bare command name, so it won't match
 # again on a rerun.
 sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
+# CachyOS's own default .zshrc (from the cachyos-zsh-config package) ships
+# Powerlevel10k, including its instant-prompt block right at the top of the
+# file — both it and oh-my-posh (below) hook zsh's own prompt-drawing
+# internals, and having both active is what produces P10k's own "prompt_cr
+# must be unset" instant-prompt error. Same comment-don't-delete treatment
+# as fastfetch/neofetch above: disable P10k's instant-prompt guard block and
+# its theme/config source lines, without touching the rest of a pre-existing
+# .zshrc the user may still want (oh-my-zsh plugins, aliases, etc. from the
+# same file). The instant-prompt block's closing `fi` is matched as either
+# `fi` or `# fi` so a rerun's range doesn't run off the end of the file once
+# the first line is already commented (a plain `^fi$` end-pattern would stop
+# matching post-rerun and comment out everything below it instead).
+sed -i -E '/p10k-instant-prompt/,/^#?[[:space:]]*fi$/{/^#/!s/^/# /}' "$HOME/.zshrc"
+sed -i -E '/^[^#]*\bpowerlevel10k\.zsh-theme\b/s/^/# /' "$HOME/.zshrc"
+sed -i -E '/^[^#]*\bp10k\.zsh\b/s/^/# /' "$HOME/.zshrc"
 cat >> "$HOME/.zshrc" << EOF
 
 $MARK
@@ -628,6 +643,31 @@ export FZF_DEFAULT_OPTS='--color=fg:$C_FG,bg:$C_BG,hl:$C_PURPLE --color=fg+:$C_F
 command -v nerdfetch &> /dev/null && nerdfetch
 $MARK_END
 EOF
+
+echo "=== checking for system-wide zsh config conflicts ==="
+# The P10k/fastfetch comment-out passes above only touch the user's own
+# ~/.zshrc — deliberately. Some distros (CachyOS's own default install is
+# the confirmed case) can also wire a competing prompt or an auto-fetch
+# banner into a system-wide file (/etc/zsh/*) that every zsh user on the
+# machine shares. Editing those is a materially bigger blast radius than a
+# personal dotfile — it'd affect every account on the box, not just the one
+# running this script — so this only detects and warns, it never edits
+# /etc/zsh/* itself. If nothing is found here but the conflict is still
+# happening, the CachyOS forum documents an unrelated but common cause of
+# the same symptom: a terminal emulator profile can hardcode an old default
+# shell independent of `chsh` until a real logout/login (not just a new
+# tab) picks up the change.
+SYS_ZSH_HIT=""
+for f in /etc/zsh/zshrc /etc/zsh/zshenv /etc/zsh/zprofile /etc/zsh/zlogin; do
+  if [ -f "$f" ] && grep -qE '(^|[^#].*)(p10k|powerlevel10k|fastfetch)' "$f" 2>/dev/null; then
+    SYS_ZSH_HIT="${SYS_ZSH_HIT}${SYS_ZSH_HIT:+, }$f"
+  fi
+done
+if [ -n "$SYS_ZSH_HIT" ]; then
+  echo "Found Powerlevel10k/fastfetch references in system-wide zsh config: $SYS_ZSH_HIT"
+  echo "These are shared by every user on this machine, so this script won't touch them automatically."
+  echo "If oh-my-posh's prompt still conflicts with Powerlevel10k after this run, comment out the matching lines there by hand."
+fi
 
 echo "=== setting zsh as default shell ==="
 if [ "$SHELL" != "$(which zsh)" ]; then

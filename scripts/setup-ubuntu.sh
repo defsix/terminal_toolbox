@@ -582,6 +582,20 @@ sed -i '/^[[:space:]]*nerdfetch[[:space:]]*$/d' "$HOME/.zshrc"
 # commented no longer starts with the bare command name, so it won't match
 # again on a rerun.
 sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$HOME/.zshrc"
+# A pre-existing Powerlevel10k setup (some distros, e.g. CachyOS, ship this
+# by default; a user could also have set it up manually here) would fight
+# oh-my-posh (below) for control of prompt-drawing — both hook zsh's own
+# prompt internals, which is what produces P10k's own "prompt_cr must be
+# unset" instant-prompt error. Same comment-don't-delete treatment as
+# fastfetch/neofetch above: disable P10k's instant-prompt guard block and
+# its theme/config source lines. The block's closing `fi` is matched as
+# either `fi` or `# fi` so a rerun's range doesn't run off the end of the
+# file once the first line is already commented (a plain `^fi$` end-pattern
+# would stop matching post-rerun and comment out everything below it
+# instead).
+sed -i -E '/p10k-instant-prompt/,/^#?[[:space:]]*fi$/{/^#/!s/^/# /}' "$HOME/.zshrc"
+sed -i -E '/^[^#]*\bpowerlevel10k\.zsh-theme\b/s/^/# /' "$HOME/.zshrc"
+sed -i -E '/^[^#]*\bp10k\.zsh\b/s/^/# /' "$HOME/.zshrc"
 cat >> "$HOME/.zshrc" << EOF
 
 $MARK
