@@ -16,6 +16,7 @@ native Windows port).
 | Script                | Target                                    |
 |-----------------------|--------------------------------------------|
 | `scripts/setup-ubuntu.sh`  | Ubuntu / Debian / Raspberry Pi OS (apt-based) |
+| `scripts/setup-cachyos.sh` | CachyOS, Arch Linux-based (pacman-based)      |
 | `scripts/setup-termux.sh`  | Termux on Android (pkg-based, no sudo)        |
 | `scripts/setup-windows.ps1`| Windows PowerShell (winget-based)             |
 
@@ -359,6 +360,48 @@ anyone who wants real zsh on Windows.
   excluding `~/.local/bin` rather than letting it leak in from the host)
   and confirming via the installed file's mtime that a rerun no longer
   redownloads it, with "already installed, skipping" printing correctly.
+- `setup-cachyos.sh` (Arch Linux-based, `pacman`): a real `-Syu`, never a
+  bare `-Sy` — Arch explicitly does not support "partial upgrades", so
+  syncing the package database without also upgrading everything already
+  installed can leave shared libraries mismatched across packages and
+  break the system. `--needed` skips already-up-to-date packages instead
+  of reinstalling them; `--noconfirm` for the same non-interactive reason
+  every other script avoids prompts. Same apt/pkg-style tolerance for one
+  unreachable repo (`|| true` on the initial sync, since CachyOS adds its
+  own repos alongside the standard Arch ones — more than one thing that
+  can be briefly down). Nerd Fonts don't need Ubuntu/Termux's manual
+  download-and-unzip dance at all: Arch's official `extra` repo packages
+  every one of the 10 font choices directly as `ttf-<name>-nerd`
+  (confirmed against the actual archlinux.org package pages one at a time,
+  not assumed — the naming isn't perfectly mechanical, e.g.
+  `ttf-ubuntu-mono-nerd`/`ttf-roboto-mono-nerd` are hyphenated but
+  `ttf-sourcecodepro-nerd` isn't). oh-my-posh, Superfile, and nerdfetch all
+  skip `pacman`/AUR entirely and reuse the exact same official cross-distro
+  installers (or, for nerdfetch, the same direct `curl` fetch) the
+  Ubuntu/Termux scripts already use — none of the three have an official
+  Arch package (oh-my-posh and Superfile are AUR-only, with documented
+  issues on some variants; nerdfetch does have a real AUR package, but
+  it's just a single-file POSIX script with no build step, so fetching it
+  directly is simpler than adding a `paru` dependency — CachyOS ships
+  `paru` by default, but this repo otherwise never needs an AUR helper for
+  anything, so it stays that way here too). `bat`'s binary is genuinely
+  named `bat` on Arch (no Debian-style `batcat` rename), so the
+  `batcat`-fallback alias dance from the other Linux scripts is dropped
+  entirely rather than kept as unreachable dead code. `unzip` is dropped
+  from the base package list too — nothing in this script actually needs
+  it, unlike Ubuntu where it's required to extract the font archive.
+  CachyOS defaults to `fish`, not `bash` or `zsh` — the script still
+  installs and switches to zsh like every other platform here (this repo
+  is fundamentally "zsh + Oh My Zsh", not "whatever the distro defaults
+  to"), just with a one-line note in the shell-switch message explaining
+  what it's actually switching *from*, since that's a real departure from
+  what Ubuntu/Debian users would expect as their prior default. Tested
+  with a PTY harness mocking `pacman` (and `sudo`, wrapped to just `exec`
+  the command directly through the test's own isolated `PATH` rather than
+  fighting sudo's `secure_path`, which would otherwise ignore the mock)
+  across two font/theme combinations, confirming the exact expected
+  `pacman` invocations (`-Syu` once, then per-tool `-S --needed` calls
+  only for tools not already present) and full idempotency on rerun.
 
 ## Testing notes
 

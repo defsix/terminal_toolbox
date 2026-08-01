@@ -37,6 +37,14 @@ bash scripts/setup-ubuntu.sh
 bash <(curl -fsSL https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-ubuntu.sh)
 ```
 
+**CachyOS (Arch Linux-based)**
+```
+bash scripts/setup-cachyos.sh
+```
+```
+bash <(curl -fsSL https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-cachyos.sh)
+```
+
 **Termux (Android)**
 ```
 bash scripts/setup-termux.sh
@@ -311,3 +319,20 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   end-to-end on all three scripts: a pre-seeded `neofetch`/`fastfetch`
   line gets commented out on the first run and stays that way (not
   re-commented, not duplicated) across reruns with a different theme.
+
+### 2026-08-01
+- **Added `scripts/setup-cachyos.sh`** for CachyOS (Arch Linux-based) —
+  the same zsh/Oh My Zsh/Oh My Posh/lsd/bat/fzf/zoxide/tmux/Superfile/
+  nerdfetch stack and 8-theme picker as `setup-ubuntu.sh`, adapted for
+  `pacman`. Base packages and per-tool installs use a real `pacman -Syu`
+  (never a bare `-Sy` — Arch doesn't support partial upgrades) with
+  `--needed --noconfirm`, tolerating one unreachable repo the same way the
+  apt/pkg fix does. Nerd Fonts skip the manual download-and-unzip dance
+  Ubuntu/Termux need entirely — Arch's official `extra` repo packages
+  every one of the 10 font choices directly as `ttf-<name>-nerd`. oh-my-posh,
+  Superfile, and nerdfetch all reuse the exact same official installers
+  (or direct fetch, for nerdfetch) the other scripts already use rather
+  than reaching for AUR/`paru`, since none of the three have an official
+  Arch package and this repo otherwise never needs an AUR helper. Verified
+  with a PTY harness mocking `pacman` across two font/theme combinations,
+  confirming the expected `pacman` calls and full idempotency on rerun.
