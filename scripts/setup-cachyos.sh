@@ -623,6 +623,22 @@ sed -i -E 's/^([[:space:]]*)(fastfetch|neofetch)([[:space:]].*)?$/\1# \2\3/' "$H
 sed -i -E '/p10k-instant-prompt/,/^#?[[:space:]]*fi$/{/^#/!s/^/# /}' "$HOME/.zshrc"
 sed -i -E '/^[^#]*\bpowerlevel10k\.zsh-theme\b/s/^/# /' "$HOME/.zshrc"
 sed -i -E '/^[^#]*\bp10k\.zsh\b/s/^/# /' "$HOME/.zshrc"
+# The three passes above assume CachyOS inlines its P10k setup directly into
+# ~/.zshrc — that's how the cachyos-zsh-config package's template reads on
+# GitHub, so it's what the earlier fix was built against. But a real
+# CachyOS install instead ships ~/.zshrc with a single line pointing at a
+# separate system file:
+#   source /usr/share/cachyos-zsh-config/cachyos-config.zsh
+# and *that* file (not ~/.zshrc) is where the instant-prompt block, P10k
+# theme sourcing, and ~/.p10k.zsh loading actually live — confirmed on a
+# real CachyOS machine, where the three passes above correctly found nothing
+# to comment out in ~/.zshrc (because there was nothing there to find) while
+# P10k kept loading anyway. Comment out this source line the same
+# don't-delete way as everything else here; it also carries some handy
+# CachyOS aliases (fixpacman, update, jctl, rip, etc.) which are lost along
+# with it — an acceptable tradeoff for actually stopping P10k at the source
+# rather than trying to neutralize its effects after it's already loaded.
+sed -i -E 's|^(source[[:space:]]+/usr/share/cachyos-zsh-config/cachyos-config\.zsh)|# \1|' "$HOME/.zshrc"
 # Commenting out the *source* line above isn't enough on its own: if P10k's
 # instant-prompt ever ran even once before this script's fix existed (e.g.
 # CachyOS's default .zshrc sourced it on the very first real zsh login this

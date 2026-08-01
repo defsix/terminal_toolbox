@@ -498,6 +498,40 @@ anyone who wants real zsh on Windows.
   per-user provisioning script is a materially bigger blast radius than
   editing `~/.zshrc` and warrants the user's own explicit action, not an
   automatic edit.
+- **The P10k fix above was necessary but not sufficient — found only by
+  dumping the user's real `~/.zshrc` in full instead of continuing to grep
+  for patterns:** even with instant-prompt and theme/config source lines
+  commented out, P10k kept auto-launching `p10k configure` on brand new
+  shells, and a real, populated `~/.p10k.zsh` (94KB, ~1841 lines) was found
+  on disk, proving it had actually run and fully configured itself at some
+  point. Every targeted grep for `p10k`/`powerlevel10k`/`P9K`/`gitstatus`
+  across all 8 zsh startup files (`~/.zshenv`, `~/.zprofile`, `~/.zshrc`,
+  `~/.zlogin` and their `/etc/zsh/` system equivalents) came back clean
+  except for the already-commented lines in `~/.zshrc` — because on a real
+  CachyOS install, `~/.zshrc` doesn't inline the P10k setup at all; it has
+  exactly one line, `source /usr/share/cachyos-zsh-config/cachyos-config.zsh`,
+  and that separate system file (not `~/.zshrc`) is where the instant-prompt
+  block, P10k theme sourcing, and `~/.p10k.zsh` loading actually live. The
+  earlier fix was built against the `cachyos-zsh-config` package's GitHub
+  template, which inlines everything directly — a reasonable assumption
+  that turned out not to match how a real install's `~/.zshrc` references
+  it. Fixed by additionally commenting out this one source line (same
+  don't-delete treatment), plus renaming any existing `~/.p10k.zsh` out of
+  the way and killing any live `gitstatusd`/P10k worker process — those
+  persist independently of `.zshrc` edits and even terminal restarts once
+  P10k's configure wizard has run even once, since they're deliberately
+  designed to survive shell restarts for performance. Losing this one
+  source line also loses a handful of CachyOS convenience aliases defined
+  in the same file (`fixpacman`, `update`, `jctl`, `rip`, etc.) — accepted
+  as the tradeoff for actually stopping P10k at its source. Verified live
+  on the real CachyOS machine that reported the original bug: a genuinely
+  fresh terminal (not a reused tab with P10k already loaded in memory)
+  shows a clean single oh-my-posh prompt, no instant-prompt error, no
+  configure wizard. Also confirmed along the way that killing Konsole and
+  reopening it too quickly can trigger KDE's session-restore to reattach
+  to the still-dying old session instead of a genuinely fresh one — a
+  Konsole/KDE timing quirk unrelated to this script, worked around by
+  waiting a few seconds before relaunching.
 
 ## Testing notes
 

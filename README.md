@@ -412,3 +412,29 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   so, since those are shared system-wide config rather than the user's own
   dotfile and editing them automatically would affect every account on the
   machine, not just the one running this script.
+- **Fixed (found via extensive live debugging on a real CachyOS machine —
+  the P10k fix above turned out to be necessary but not sufficient):**
+  even with the instant-prompt block and theme/config source lines
+  commented out, P10k kept auto-launching its own `p10k configure` wizard
+  on brand new shells, and a real, populated `~/.p10k.zsh` (94KB, close to
+  2000 lines) was found on disk from it having actually run once already.
+  Root cause, confirmed by dumping the user's real `~/.zshrc` in full
+  rather than continuing to grep for patterns: this CachyOS install's
+  `~/.zshrc` doesn't inline P10k's setup directly (the form the earlier
+  fix assumed, matching the `cachyos-zsh-config` package's template on
+  GitHub) — it has a single line, `source
+  /usr/share/cachyos-zsh-config/cachyos-config.zsh`, and P10k's instant
+  prompt, theme sourcing, and `~/.p10k.zsh` loading all actually live
+  inside *that* separate system file, which the earlier comment-out passes
+  never touched. `setup-cachyos.sh` now also comments out this source line
+  itself (same don't-delete treatment as everything else), and additionally
+  renames any existing `~/.p10k.zsh` out of the way and kills any live
+  `gitstatusd`/P10k worker process, since those persist independently of
+  `.zshrc` once P10k has run its configure wizard even once. Commenting out
+  the source line does lose a handful of CachyOS convenience aliases from
+  that same file (`fixpacman`, `update`, `jctl`, `rip`, etc.) — an accepted
+  tradeoff for actually stopping P10k at its source rather than continuing
+  to chase its downstream effects. Verified live: after applying the fix,
+  a genuinely fresh terminal (not a reused, already-P10k-loaded tab) shows
+  a clean single oh-my-posh prompt with no instant-prompt error and no
+  configure-wizard prompt.
