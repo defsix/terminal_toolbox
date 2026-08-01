@@ -183,7 +183,32 @@ echo "=== 1/12: base packages ==="
 # refresh is still enough; don't let one broken third-party source block
 # everything downstream.
 sudo apt update || true
-sudo apt install -y zsh curl wget git unzip fontconfig
+if ! sudo apt install -y zsh curl wget git unzip fontconfig; then
+  # apt can return nonzero here even when every package we actually asked
+  # for is fine, because dpkg processes ALL pending package configuration
+  # on any apt run — a single unrelated broken/half-installed package
+  # already on the system (e.g. a third-party .deb whose post-install
+  # script failed) makes the whole `apt install` command fail, which would
+  # otherwise kill this entire script under `set -e` before anything (Oh
+  # My Zsh, fonts, oh-my-posh, fastfetch, etc.) ever runs. Found on a real
+  # device with several third-party apt repos (Tailscale, a hardware
+  # vendor's own repo, PiAware, Adoptium) where an already-broken, unrelated
+  # package's postinst script failed mid-configure. Verify the packages we
+  # actually need are present instead of trusting apt's exit code alone;
+  # only treat this as fatal if one of them is genuinely still missing.
+  MISSING=""
+  for pkg_cmd in zsh curl wget git unzip; do
+    command -v "$pkg_cmd" &> /dev/null || MISSING="$MISSING $pkg_cmd"
+  done
+  command -v fc-list &> /dev/null || MISSING="$MISSING fontconfig"
+  if [ -n "$MISSING" ]; then
+    echo "apt install failed and these are still missing:$MISSING"
+    echo "This usually means a genuinely broken package on this system, not something this script can fix. Try: sudo apt --fix-broken install (or: sudo dpkg --configure -a), then rerun this script."
+    exit 1
+  else
+    echo "apt install reported an error, but zsh/curl/wget/git/unzip/fontconfig are all present — likely an unrelated broken package on this system (try 'sudo apt --fix-broken install' to clean it up). Continuing."
+  fi
+fi
 
 echo "=== 2/12: Oh My Zsh ==="
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -372,7 +397,7 @@ fi
 
 echo "=== 6/12: bat ==="
 if ! command -v bat &> /dev/null && ! command -v batcat &> /dev/null; then
-  sudo apt install -y bat
+  sudo apt install -y bat || echo "Couldn't install bat via apt — an unrelated broken package on this system can cause this too (try 'sudo apt --fix-broken install'). Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi
@@ -393,21 +418,21 @@ fi
 
 echo "=== 7/12: fzf ==="
 if ! command -v fzf &> /dev/null; then
-  sudo apt install -y fzf
+  sudo apt install -y fzf || echo "Couldn't install fzf via apt — an unrelated broken package on this system can cause this too (try 'sudo apt --fix-broken install'). Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi
 
 echo "=== 8/12: zoxide ==="
 if ! command -v zoxide &> /dev/null; then
-  sudo apt install -y zoxide
+  sudo apt install -y zoxide || echo "Couldn't install zoxide via apt — an unrelated broken package on this system can cause this too (try 'sudo apt --fix-broken install'). Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi
 
 echo "=== 9/12: tmux ==="
 if ! command -v tmux &> /dev/null; then
-  sudo apt install -y tmux
+  sudo apt install -y tmux || echo "Couldn't install tmux via apt — an unrelated broken package on this system can cause this too (try 'sudo apt --fix-broken install'). Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi

@@ -171,7 +171,29 @@ echo "=== 1/12: base packages ==="
 # script at step 1 of 10. Don't let one broken mirror block everything
 # downstream.
 pkg update -y || true
-pkg install -y zsh curl wget git unzip
+if ! pkg install -y zsh curl wget git unzip; then
+  # pkg (like the apt it wraps) can return nonzero here even when every
+  # package we actually asked for is fine, because dpkg processes ALL
+  # pending package configuration on any run — a single unrelated broken/
+  # half-installed package already on the system makes the whole install
+  # command fail, which would otherwise kill this entire script under
+  # `set -e` before anything downstream ever runs. Found on a real device
+  # with several third-party packages installed where an unrelated,
+  # already-broken one's postinst script failed mid-configure. Verify the
+  # packages we actually need are present instead of trusting the exit code
+  # alone; only treat this as fatal if one of them is genuinely missing.
+  MISSING=""
+  for pkg_cmd in zsh curl wget git unzip; do
+    command -v "$pkg_cmd" &> /dev/null || MISSING="$MISSING $pkg_cmd"
+  done
+  if [ -n "$MISSING" ]; then
+    echo "pkg install failed and these are still missing:$MISSING"
+    echo "This usually means a genuinely broken package on this device, not something this script can fix. Try: pkg install -f (or reinstall the broken package directly), then rerun this script."
+    exit 1
+  else
+    echo "pkg install reported an error, but zsh/curl/wget/git/unzip are all present — likely an unrelated broken package on this device. Continuing."
+  fi
+fi
 
 echo "=== 2/12: Oh My Zsh ==="
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -327,7 +349,7 @@ fi
 
 echo "=== 5/12: lsd ==="
 if ! command -v lsd &> /dev/null; then
-  pkg install -y lsd
+  pkg install -y lsd || echo "Couldn't install lsd via pkg — an unrelated broken package on this device can cause this too. Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi
@@ -378,7 +400,7 @@ fi
 
 echo "=== 6/12: bat ==="
 if ! command -v bat &> /dev/null && ! command -v batcat &> /dev/null; then
-  pkg install -y bat
+  pkg install -y bat || echo "Couldn't install bat via pkg — an unrelated broken package on this device can cause this too. Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi
@@ -399,21 +421,21 @@ fi
 
 echo "=== 7/12: fzf ==="
 if ! command -v fzf &> /dev/null; then
-  pkg install -y fzf
+  pkg install -y fzf || echo "Couldn't install fzf via pkg — an unrelated broken package on this device can cause this too. Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi
 
 echo "=== 8/12: zoxide ==="
 if ! command -v zoxide &> /dev/null; then
-  pkg install -y zoxide
+  pkg install -y zoxide || echo "Couldn't install zoxide via pkg — an unrelated broken package on this device can cause this too. Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi
 
 echo "=== 9/12: tmux ==="
 if ! command -v tmux &> /dev/null; then
-  pkg install -y tmux
+  pkg install -y tmux || echo "Couldn't install tmux via pkg — an unrelated broken package on this device can cause this too. Skipping; rerun this script once resolved."
 else
   echo "already installed, skipping"
 fi

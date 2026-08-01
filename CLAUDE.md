@@ -269,6 +269,34 @@ anyone who wants real zsh on Windows.
   recoverable, not fatal: it's rate-limited per IP, real on a shared
   mobile/carrier connection, and a bare `set -e` script dies silently with
   zero remaining steps run if the failure isn't checked explicitly.
+- **`apt install`/`pkg install` can fail for reasons that have nothing to do
+  with the packages actually being requested — found via a real device
+  with several third-party apt repos (Tailscale, a hardware vendor's own
+  repo, PiAware, Adoptium):** dpkg configures *every* pending package on
+  any apt run, not just the ones named on the command line, so a single
+  unrelated package already sitting half-installed on the system (in the
+  reported case, one whose post-install script failed trying to source the
+  user's own customized `~/.zshrc`, which referenced a command not on that
+  script's PATH) makes the whole `apt install`/`pkg install` command return
+  nonzero — even though zsh/curl/wget/git/unzip/fontconfig were all
+  already the newest version and perfectly fine. `setup-ubuntu.sh`'s base
+  packages line, plus its bat/fzf/zoxide/tmux steps, and
+  `setup-termux.sh`'s equivalents, had zero tolerance for this, so under
+  `set -e` the whole script died silently at whichever install call ran
+  first — on the reporting device, that was step 1 of 12, before literally
+  anything else (Oh My Zsh, fonts, oh-my-posh, fastfetch, btop) ever ran.
+  Fixed by checking `command -v` for each package actually requested
+  afterward instead of trusting apt/pkg's exit code alone: only treat it
+  as fatal if something genuinely needed is still missing, otherwise print
+  a note pointing at `apt --fix-broken install` (or `dpkg --configure -a`)
+  and continue. `setup-cachyos.sh` doesn't need the equivalent — pacman's
+  transaction model doesn't have dpkg's "configure everything pending on
+  any run" behavior, so this specific failure mode doesn't apply there;
+  its own `pacman_run` retry helper already covers pacman's actual failure
+  mode (lock contention). Verified with a mock `apt` reproducing the exact
+  same failure: confirmed the script now continues when the requested
+  packages are genuinely present, and still exits with a clear diagnostic
+  when one of them actually is missing.
 - Never pipe a vendor installer straight into `bash` (`curl ... | bash`, or
   `bash -c "$(curl ...)"`) without checking the fetch on its own first. If
   the fetch fails outright, `bash` gets an empty script and exits 0 — under

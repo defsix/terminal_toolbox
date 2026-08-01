@@ -476,3 +476,23 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   GitHub-`.deb`-fallback, and unsupported-architecture paths, plus a
   migration test confirming an old bare `nerdfetch` line gets commented
   out cleanly on rerun.
+- **Fixed (found via a real device with several third-party apt repos —
+  Tailscale, a hardware vendor's own repo, PiAware, Adoptium):** `apt
+  install` can return nonzero even when every package actually requested
+  installed fine, because dpkg processes *all* pending package
+  configuration on any apt run — a single unrelated, already-broken
+  package already on the system (in this case one whose post-install
+  script failed trying to source the user's own customized `.zshrc`) makes
+  the whole command fail. Several `apt install` calls in `setup-ubuntu.sh`
+  (base packages, bat, fzf, zoxide, tmux) had no tolerance for this at
+  all, so under `set -e` the entire script died silently at whichever one
+  ran first — on the reporting device, at the very first step, before Oh
+  My Zsh, fonts, oh-my-posh, fastfetch, or anything else ever ran.
+  `setup-termux.sh`'s `pkg` (which wraps the same apt/dpkg machinery) had
+  the identical gap. Fixed by checking whether the packages actually
+  requested are present afterward instead of trusting the exit code alone
+  — only genuinely fatal (missing prerequisite) if one of them isn't.
+  Verified with a mock `apt` that always fails the same way the real
+  broken package did: confirmed the script now continues when the wanted
+  packages are all actually present, and still exits with a clear message
+  when one is genuinely missing.
