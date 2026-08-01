@@ -17,6 +17,28 @@ set -e
 # skipping (same bug already found and fixed on the Ubuntu script).
 export PATH="$HOME/.local/bin:$PATH"
 
+# `pacman` fails immediately with "unable to lock database" if another
+# pacman/paru transaction is already running elsewhere on the system (a
+# background updater, a software-center app, or occasionally a stale lock
+# left behind by a killed process) — found via a real CachyOS run where an
+# unrelated update was in progress. That's normally transient, so retry a
+# few times with a short, increasing wait instead of letting `set -e` kill
+# the whole script the first time it happens; only give up (and tell the
+# user how to check/clear a genuinely stale lock) after several attempts.
+pacman_run() {
+  local attempt=1 max_attempts=5
+  while [ "$attempt" -le "$max_attempts" ]; do
+    if sudo pacman "$@"; then
+      return 0
+    fi
+    echo "pacman database is locked (another package manager running, or a leftover lock from an interrupted run) — retrying in $((attempt * 3))s ($attempt/$max_attempts)..." >&2
+    sleep "$((attempt * 3))"
+    attempt=$((attempt + 1))
+  done
+  echo "pacman is still locked after $max_attempts attempts. If nothing else is actually installing packages right now, remove the stale lock with: sudo rm -f /var/lib/pacman/db.lck — then rerun this script." >&2
+  return 1
+}
+
 NERD_FONT_NAME="JetBrainsMono"   # default; the picker below can override this
 THEME="dracula"                  # default; the picker below can override this
 
@@ -200,7 +222,7 @@ echo "=== 1/11: base packages ==="
 # (CachyOS adds its own repos alongside the standard Arch ones, so there's
 # more than one thing that can be briefly down) rather than letting `set -e`
 # kill the whole script over it.
-sudo pacman -Syu --needed --noconfirm zsh git curl wget fontconfig || true
+pacman_run -Syu --needed --noconfirm zsh git curl wget fontconfig || true
 
 echo "=== 2/11: Oh My Zsh ==="
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -249,9 +271,12 @@ echo "=== 3/11: Nerd Font ($NERD_FONT_NAME) ==="
 # Unlike Ubuntu/Termux, no manual download+unzip dance needed — Arch's
 # official extra repo packages every one of our 10 font choices directly.
 if ! fc-list | grep -qi "$NERD_FONT_NAME Nerd Font"; then
-  sudo pacman -S --needed --noconfirm "$FONT_PKG"
-  fc-cache -f >/dev/null
-  echo "Font installed. Set your terminal emulator's font to '${NERD_FONT_NAME} Nerd Font'."
+  if pacman_run -S --needed --noconfirm "$FONT_PKG"; then
+    fc-cache -f >/dev/null
+    echo "Font installed. Set your terminal emulator's font to '${NERD_FONT_NAME} Nerd Font'."
+  else
+    echo "Couldn't install $FONT_PKG — install it manually once pacman is free, then rerun this script to pick up the font."
+  fi
 else
   echo "already installed, skipping"
 fi
@@ -311,7 +336,7 @@ fi
 
 echo "=== 5/11: lsd ==="
 if ! command -v lsd &> /dev/null; then
-  sudo pacman -S --needed --noconfirm lsd
+  pacman_run -S --needed --noconfirm lsd || echo "Couldn't install lsd — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi
@@ -362,7 +387,7 @@ fi
 
 echo "=== 6/11: bat ==="
 if ! command -v bat &> /dev/null; then
-  sudo pacman -S --needed --noconfirm bat
+  pacman_run -S --needed --noconfirm bat || echo "Couldn't install bat — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi
@@ -382,21 +407,21 @@ fi
 
 echo "=== 7/11: fzf ==="
 if ! command -v fzf &> /dev/null; then
-  sudo pacman -S --needed --noconfirm fzf
+  pacman_run -S --needed --noconfirm fzf || echo "Couldn't install fzf — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi
 
 echo "=== 8/11: zoxide ==="
 if ! command -v zoxide &> /dev/null; then
-  sudo pacman -S --needed --noconfirm zoxide
+  pacman_run -S --needed --noconfirm zoxide || echo "Couldn't install zoxide — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi
 
 echo "=== 9/11: tmux ==="
 if ! command -v tmux &> /dev/null; then
-  sudo pacman -S --needed --noconfirm tmux
+  pacman_run -S --needed --noconfirm tmux || echo "Couldn't install tmux — install it manually once pacman is free, then rerun this script."
 else
   echo "already installed, skipping"
 fi

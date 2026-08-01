@@ -409,6 +409,25 @@ anyone who wants real zsh on Windows.
   across two font/theme combinations, confirming the exact expected
   `pacman` invocations (`-Syu` once, then per-tool `-S --needed` calls
   only for tools not already present) and full idempotency on rerun.
+- **`setup-cachyos.sh`'s `pacman` calls needed retry logic, found via a
+  real run that hit a genuinely concurrent update:** `pacman` fails
+  immediately with "unable to lock database" if any other pacman/paru
+  transaction is already running (a background updater, a software-center
+  app, or occasionally a stale lock left behind by a killed process).
+  Every install step except the very first (`base packages`, which
+  already had a bare `|| true`) had no handling for this at all, so
+  `set -e` killed the script partway through on the first lock contention
+  it hit. Fixed with a `pacman_run` helper that retries a few times with a
+  short, increasing wait (3s, 6s, 9s, 12s, 15s) before giving up — this
+  class of contention is normally transient, so silently failing on the
+  very first attempt wastes a setup run over what's often just a few
+  seconds of waiting. After exhausting retries, it prints a message
+  pointing at `/var/lib/pacman/db.lck` to check/remove if nothing else is
+  actually running, rather than leaving the user with a bare pacman error.
+  Verified with a mock `pacman` that fails a controlled number of times
+  before succeeding (confirmed both the eventually-succeeds path and the
+  gives-up-after-5-attempts path in isolation), plus a full script run
+  where every install step hit one transient failure before succeeding.
 
 ## Testing notes
 

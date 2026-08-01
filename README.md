@@ -355,3 +355,17 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   `bash (curl -fsSL <url> | psub)`. The README now shows the fish form
   first for this platform, with the bash/zsh form underneath for anyone
   who already switched shells.
+- **Fixed (found via the same real CachyOS run):** `pacman` fails
+  immediately with "unable to lock database" if another pacman/paru
+  transaction is already running elsewhere on the system (in this case a
+  genuinely concurrent update) — every package-install step in
+  `setup-cachyos.sh` except the first one had no error handling at all for
+  this, so `set -e` killed the whole script partway through on the very
+  first lock contention it hit. Added a `pacman_run` helper that retries
+  a few times with a short, increasing wait before giving up (this kind of
+  lock contention is normally transient) and, only after several failed
+  attempts, prints a clear message pointing at the stale-lock file to
+  check/remove if nothing else is actually running. Verified with a mock
+  `pacman` that fails a controlled number of times before succeeding (both
+  the eventually-succeeds and the gives-up-after-5-attempts paths), and a
+  full script run where every install step hits one transient failure.
