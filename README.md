@@ -507,3 +507,13 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   neither is present — verified with a mocked `apt` across all three
   outcomes (fastfetch installs, fastfetch fails but neofetch succeeds,
   both fail) confirming each exits cleanly without ever going fatal.
+- **Added git to `setup-windows.ps1`.** The other three scripts already
+  had it as a base prerequisite (Oh My Zsh plugins and the Dracula tmux
+  theme are both git-cloned), but Windows never actually installed it —
+  the script only mentioned Git Bash as an option for users who wanted
+  real zsh. Installed via winget (`Git.Git`, confirmed against the actual
+  winget-pkgs manifest path), same guarded pattern as every other tool
+  here. `gh` (the GitHub CLI) was considered and deliberately left out —
+  not worth the added complexity (Ubuntu/Debian needs a pinned signing
+  key plus its own apt source, not a plain package install) unless it's
+  something actually used day-to-day.

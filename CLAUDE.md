@@ -1,10 +1,12 @@
 # terminal-setup
 
-One-stop shell provisioning scripts: zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
+One-stop shell provisioning scripts: git, zsh + Oh My Zsh, a Nerd Font, Oh My Posh,
 lsd, bat, fzf, zoxide, tmux, Superfile, fastfetch (a system-info fetch tool,
 the same one on every platform — nerdfetch was dropped in favor of it, see
 the Conventions bullet below), and btop (a resource monitor; btop4win on
-Windows). Run interactively, each script opens with a
+Windows). `gh` (the GitHub CLI) was deliberately left out — considered and
+rejected as not worth the added complexity unless it's something actually
+used day-to-day. Run interactively, each script opens with a
 picker for one of 10 Nerd Fonts and one of 8 themes (Dracula, M365Princess,
 Atomic, Catppuccin, Catppuccin Mocha, JanDeDobbeleer, Marcduiker, Neko —
 all genuine premade oh-my-posh prompts fetched unmodified from upstream)
@@ -594,6 +596,16 @@ anyone who wants real zsh on Windows.
   own precmd hooks) in the managed `.zshrc` block that just prints a blank
   line before each prompt. Confirmed via `$precmd_functions` that it
   registers alongside the others rather than replacing any of them.
+- git on `setup-windows.ps1`: the three bash-based scripts already had git
+  as a base prerequisite (Oh My Zsh plugins and the Dracula tmux theme are
+  both git-cloned) but Windows never actually installed it — only
+  mentioned Git Bash as an option for users who wanted real zsh separately.
+  Added via winget (`Git.Git`, confirmed against the actual winget-pkgs
+  manifest path), same `Get-Command`-guarded pattern as every other tool
+  here. `gh` was considered alongside this and explicitly rejected — not
+  worth the complexity (Ubuntu/Debian needs a pinned signing key plus its
+  own apt source, not a plain package install) without a concrete reason
+  to reach for it day-to-day.
 
 ## Testing notes
 
