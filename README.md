@@ -517,3 +517,10 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   not worth the added complexity (Ubuntu/Debian needs a pinned signing
   key plus its own apt source, not a plain package install) unless it's
   something actually used day-to-day.
+- **Added an "Installed tools reference" block to the end of every
+  script's output** — a quick-reference table of each tool's help command
+  plus a short setup/usage note (e.g. `git`'s first-time `user.name`/
+  `user.email` config and how to set up GitHub SSH auth; `fzf`'s Ctrl+R/
+  Ctrl+T bindings; `zoxide`'s `z`/`zi` usage), printed right after the
+  existing numbered "Next steps" list. Windows' version omits zsh/tmux
+  (not present there) but is otherwise the same reference.

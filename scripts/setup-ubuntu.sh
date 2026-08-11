@@ -709,4 +709,21 @@ All done. Next steps:
   8. btop is installed for a resource monitor — launch it with: btop
   9. Want a different font or theme? Just rerun this script — it'll prompt
      again and replace the old config.
+
+Installed tools reference — help command (setup/usage notes):
+  git        git --help (first-time setup: git config --global user.name "Your Name"
+             && git config --global user.email "you@example.com"; for GitHub auth,
+             generate a key with ssh-keygen -t ed25519 -C "you@example.com" and add
+             it at https://github.com/settings/keys)
+  zsh        man zsh (Oh My Zsh + plugins already configured)
+  oh-my-posh oh-my-posh --help (theme already set; rerun this script to change it)
+  lsd        lsd --help (aliased to: ls, ll, la, lt)
+  bat        bat --help (aliased to: cat)
+  fzf        fzf --help (Ctrl+R history search, Ctrl+T file search, via the Oh My
+             Zsh fzf plugin)
+  zoxide     zoxide --help (usage: z <partial-dir-name>; zi for an interactive picker)
+  tmux       man tmux (start a session with: tmux)
+  Superfile  spf --help (launch with: spf)
+  fastfetch  fastfetch --help (runs automatically at the start of each new shell)
+  btop       btop --help (launch with: btop; q to quit, Esc for the menu)
 EOF

@@ -606,6 +606,17 @@ anyone who wants real zsh on Windows.
   worth the complexity (Ubuntu/Debian needs a pinned signing key plus its
   own apt source, not a plain package install) without a concrete reason
   to reach for it day-to-day.
+- Every script's final output ends with an "Installed tools reference"
+  block — plain `cat`/`Write-Host` text, same minimalist style as the
+  numbered "Next steps" list above it rather than a fancy formatted table,
+  since alignment across dynamically-named tools in a heredoc/echo
+  pipeline isn't worth fighting for. One line per tool: its help command,
+  plus a short setup/usage note where one's actually useful (git's
+  first-time `user.name`/`user.email` config and GitHub SSH key setup;
+  fzf's Ctrl+R/Ctrl+T bindings; zoxide's `z`/`zi`). The three bash-based
+  scripts share near-identical content (Ubuntu/Termux/CachyOS all install
+  the same tool set); `setup-windows.ps1`'s version drops the zsh/tmux
+  lines since neither exists there.
 
 ## Testing notes
 

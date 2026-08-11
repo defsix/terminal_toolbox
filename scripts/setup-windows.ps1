@@ -459,3 +459,17 @@ Write-Host "  8. Want real zsh too? Same answer: WSL (wsl --install) and run set
 Write-Host "  9. fastfetch is set up and runs automatically at the end of a new PowerShell window (nerdfetch, used on the Linux/Termux scripts, doesn't support Windows at all - fastfetch is the equivalent here)."
 Write-Host "  10. btop is installed (as btop4win, the Windows port) for a resource monitor - launch it with: btop"
 Write-Host "  11. Want a different font or theme? Just rerun this script — it'll prompt again and replace the old config."
+
+Write-Host "`nInstalled tools reference — help command (setup/usage notes):" -ForegroundColor Green
+Write-Host "  git        git --help (first-time setup: git config --global user.name `"Your Name`""
+Write-Host "             && git config --global user.email `"you@example.com`"; for GitHub auth,"
+Write-Host "             generate a key with ssh-keygen -t ed25519 -C `"you@example.com`" and add"
+Write-Host "             it at https://github.com/settings/keys)"
+Write-Host "  oh-my-posh oh-my-posh --help (theme already set; rerun this script to change it)"
+Write-Host "  lsd        lsd --help (aliased to: ls, ll, la, lt)"
+Write-Host "  bat        bat --help (aliased to: cat, via `$env:BAT_THEME)"
+Write-Host "  fzf        fzf --help"
+Write-Host "  zoxide     zoxide --help (usage: z <partial-dir-name>; zi for an interactive picker)"
+Write-Host "  Superfile  spf --help (launch with: spf)"
+Write-Host "  fastfetch  fastfetch --help (runs automatically at the start of each new shell)"
+Write-Host "  btop       btop --help (launch with: btop; q to quit, Esc for the menu)"
