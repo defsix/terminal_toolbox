@@ -494,6 +494,33 @@ fi
 echo "--- setting superfile theme to $THEME ---"
 SPF_CONFIG_DIR="$HOME/.config/superfile"
 SPF_CONFIG="$SPF_CONFIG_DIR/config.toml"
+# Superfile ships 20+ real bundled themes of its own (confirmed against its
+# actual theme directory: dracula, catppuccin-mocha/-macchiato/-frappe/
+# -latte, nord, gruvbox, tokyonight, etc.) — prefer those directly over our
+# own generated file wherever an exact match exists, rather than writing a
+# redundant custom theme Superfile already has natively. This also sidesteps
+# a real bug: writing our own file under the *same bare name* as one of
+# Superfile's bundled themes (e.g. "dracula") silently collides with it —
+# config.toml ends up correctly saying theme = "dracula", but Superfile
+# loads its own bundled Dracula colors instead of the file we just wrote
+# (confirmed live: a real device showed the exact right theme name in
+# config.toml while still rendering the wrong colors). "catppuccin" here
+# specifically means the Macchiato flavor (see the oh-my-posh theme block
+# above), matching Superfile's "catppuccin-macchiato" exactly. Only themes
+# with no bundled Superfile equivalent (m365princess, atomic,
+# jandedobbeleer, marcduiker, neko) fall back to our own generated file,
+# prefixed so it can never collide with any bundled name, present or future.
+case "$THEME" in
+  dracula)          SPF_THEME="dracula" ;;
+  catppuccin)        SPF_THEME="catppuccin-macchiato" ;;
+  catppuccin_mocha)  SPF_THEME="catppuccin-mocha" ;;
+  *)                 SPF_THEME="tt-${THEME}" ;;
+esac
+SPF_USE_BUNDLED=0
+case "$SPF_THEME" in
+  tt-*) ;;
+  *) SPF_USE_BUNDLED=1 ;;
+esac
 if [ ! -f "$SPF_CONFIG" ]; then
   # `spf --fix-config-file` looks like the natural way to generate this, but
   # it opens the real controlling terminal directly (like /dev/tty) rather
@@ -505,13 +532,14 @@ if [ ! -f "$SPF_CONFIG" ]; then
   # to do: "adds any *missing* fields"), so a minimal file with just the
   # theme line is sufficient and has no TTY risk at all.
   mkdir -p "$SPF_CONFIG_DIR"
-  echo "theme = \"$THEME\"" > "$SPF_CONFIG"
+  echo "theme = \"$SPF_THEME\"" > "$SPF_CONFIG"
 fi
 # Superfile supports fully custom theme files (not just its bundled names) —
-# https://superfile.dev/configure/custom-theme/ — so write our own using this
-# theme's own role colors instead of guessing at the closest bundled name.
+# https://superfile.dev/configure/custom-theme/ — only needed when there's
+# no bundled theme to use directly (see above).
+if [ "$SPF_USE_BUNDLED" -eq 0 ]; then
 mkdir -p "$SPF_CONFIG_DIR/theme"
-cat > "$SPF_CONFIG_DIR/theme/${THEME}.toml" << EOF
+cat > "$SPF_CONFIG_DIR/theme/${SPF_THEME}.toml" << EOF
 code_syntax_highlight = "dracula"
 
 full_screen_fg = "$C_FG"
@@ -559,14 +587,15 @@ error = "$C_RED"
 hint = "$C_CYAN"
 cancel = "$C_MUTED"
 EOF
+fi
 if [ -f "$SPF_CONFIG" ]; then
   if grep -q "^theme = " "$SPF_CONFIG"; then
-    sed -i "s/^theme = .*/theme = \"$THEME\"/" "$SPF_CONFIG"
+    sed -i "s/^theme = .*/theme = \"$SPF_THEME\"/" "$SPF_CONFIG"
   else
-    echo "theme = \"$THEME\"" >> "$SPF_CONFIG"
+    echo "theme = \"$SPF_THEME\"" >> "$SPF_CONFIG"
   fi
 else
-  echo "Couldn't find/generate $SPF_CONFIG — run 'spf' once yourself, then set theme = \"$THEME\" in it."
+  echo "Couldn't find/generate $SPF_CONFIG — run 'spf' once yourself, then set theme = \"$SPF_THEME\" in it."
 fi
 
 echo "=== 11/12: fastfetch ==="

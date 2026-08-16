@@ -274,6 +274,29 @@ if (-not (Get-Command spf -ErrorAction SilentlyContinue)) {
 
 Write-Host "--- setting superfile theme to $Theme ---"
 $SpfConfig = "$env:APPDATA\superfile\config.toml"
+# Superfile ships 20+ real bundled themes of its own (confirmed against its
+# actual theme directory: dracula, catppuccin-mocha/-macchiato/-frappe/
+# -latte, nord, gruvbox, tokyonight, etc.) — prefer those directly over our
+# own generated file wherever an exact match exists, rather than writing a
+# redundant custom theme Superfile already has natively. This also
+# sidesteps a real bug: writing our own file under the *same bare name* as
+# one of Superfile's bundled themes (e.g. "dracula") silently collides with
+# it — config.toml ends up correctly saying theme = "dracula", but
+# Superfile loads its own bundled Dracula colors instead of the file we
+# just wrote (confirmed live on a real Linux device: exact right theme
+# name in config.toml, still the wrong colors). "catppuccin" here
+# specifically means the Macchiato flavor (see the oh-my-posh theme block
+# above), matching Superfile's "catppuccin-macchiato" exactly. Only themes
+# with no bundled Superfile equivalent (m365princess, atomic,
+# jandedobbeleer, marcduiker, neko) fall back to our own generated file,
+# prefixed so it can never collide with any bundled name, present or future.
+$SpfTheme = switch ($Theme) {
+  "dracula"          { "dracula" }
+  "catppuccin"       { "catppuccin-macchiato" }
+  "catppuccin_mocha" { "catppuccin-mocha" }
+  default            { "tt-$Theme" }
+}
+$SpfUseBundled = -not $SpfTheme.StartsWith("tt-")
 if (-not (Test-Path $SpfConfig)) {
   # `spf --fix-config-file` looks like the natural way to generate this, but
   # it opens the real console directly (like CONIN$/CONOUT$) rather than
@@ -285,11 +308,12 @@ if (-not (Test-Path $SpfConfig)) {
   # itself is documented to do: "adds any *missing* fields"), so a minimal
   # file with just the theme line is sufficient and has no console risk.
   New-Item -ItemType Directory -Force -Path (Split-Path $SpfConfig) | Out-Null
-  Set-Content -Path $SpfConfig -Value "theme = `"$Theme`""
+  Set-Content -Path $SpfConfig -Value "theme = `"$SpfTheme`""
 }
 # Superfile supports fully custom theme files (not just its bundled names) —
-# https://superfile.dev/configure/custom-theme/ — so write our own using this
-# theme's own role colors instead of guessing at the closest bundled name.
+# https://superfile.dev/configure/custom-theme/ — only needed when there's
+# no bundled theme to use directly (see above).
+if (-not $SpfUseBundled) {
 $SpfThemeDir = "$env:APPDATA\superfile\theme"
 New-Item -ItemType Directory -Force -Path $SpfThemeDir | Out-Null
 @"
@@ -339,18 +363,19 @@ correct = "$($C.GREEN)"
 error = "$($C.RED)"
 hint = "$($C.CYAN)"
 cancel = "$($C.MUTED)"
-"@ | Set-Content -Path "$SpfThemeDir\$Theme.toml"
+"@ | Set-Content -Path "$SpfThemeDir\$SpfTheme.toml"
+}
 
 if (Test-Path $SpfConfig) {
   $content = Get-Content $SpfConfig
   if ($content -match "^theme = ") {
-    $content = $content -replace "^theme = .*", "theme = `"$Theme`""
+    $content = $content -replace "^theme = .*", "theme = `"$SpfTheme`""
     Set-Content -Path $SpfConfig -Value $content
   } else {
-    Add-Content -Path $SpfConfig -Value "theme = `"$Theme`""
+    Add-Content -Path $SpfConfig -Value "theme = `"$SpfTheme`""
   }
 } else {
-  Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = `"$Theme`" in its config.toml (run 'spf path-list' to find the exact path)."
+  Write-Host "Couldn't find/generate $SpfConfig — run 'spf' once yourself, then set theme = `"$SpfTheme`" in its config.toml (run 'spf path-list' to find the exact path)."
 }
 
 Section "9/11: fastfetch"

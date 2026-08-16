@@ -198,6 +198,40 @@ anyone who wants real zsh on Windows.
   equivalent). Note: `spf path-list` looked like it also triggered config
   init on older Superfile releases, but as of v1.6.0 it only prints paths
   and creates nothing — don't revert to it.
+- **Superfile theme names must be checked against Superfile's own bundled
+  theme list before writing a custom file under that name — found via a
+  real Raspberry Pi/ClockworkPi device where the theme appeared broken
+  after every script run, fixed itself when manually re-selected, then
+  broke again on the next rerun.** Root cause: Superfile ships 20+ real
+  bundled themes (confirmed against its actual theme directory: `dracula`,
+  `catppuccin-mocha`/`-macchiato`/`-frappe`/`-latte`, `nord`, `gruvbox`,
+  `tokyonight`, etc.), and this repo's own `dracula`/`catppuccin`/
+  `catppuccin_mocha` theme choices collide with those bundled names
+  exactly. Writing a custom file at `~/.config/superfile/theme/dracula.toml`
+  doesn't override Superfile's own bundled `dracula` — `config.toml`
+  correctly says `theme = "dracula"`, but Superfile loads its bundled
+  colors, not the file this script wrote (confirmed live: right name,
+  wrong colors, every time). The one-line "confirmed by dropping a
+  hand-edited .toml under a name Superfile never shipped" verification
+  note above never actually tested the collision case — it used a name
+  Superfile has no bundled theme for, which is exactly the case that still
+  works fine and isn't where the bug is. Fixed by checking each theme
+  against Superfile's real bundled list first and using that name directly
+  when a match exists, skipping the custom file entirely: `dracula` →
+  bundled `dracula`; `catppuccin` → bundled `catppuccin-macchiato` (this
+  repo's `catppuccin` choice is specifically the Macchiato flavor, see the
+  oh-my-posh theme block); `catppuccin_mocha` → bundled `catppuccin-mocha`.
+  The five themes with no bundled equivalent (`m365princess`, `atomic`,
+  `jandedobbeleer`, `marcduiker`, `neko`) still generate a custom file as
+  before, now prefixed `tt-<name>` so a future Superfile release adding a
+  bundled theme under one of those names can't cause the same collision
+  again. Applied identically across all four scripts (bash `case` on
+  `$THEME` setting `$SPF_THEME` and a `$SPF_USE_BUNDLED` flag; PowerShell
+  `switch` equivalent). Verified end-to-end for all 8 themes on all four
+  scripts: bundled-match themes write straight to `config.toml` with no
+  custom file created; fallback themes generate and reference their own
+  `tt`-prefixed file; switching between a bundled and a fallback theme on
+  a rerun updates `config.toml` correctly either direction.
 - Switchable-but-idempotent config blocks: `.zshrc`/`.tmux.conf`/the
   PowerShell `$PROFILE` all use a strip-then-reappend pattern — if the
   `# >>> custom terminal setup >>>` / `# <<< ... <<<` marker pair is

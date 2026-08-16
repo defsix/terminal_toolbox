@@ -524,3 +524,28 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   Ctrl+T bindings; `zoxide`'s `z`/`zi` usage), printed right after the
   existing numbered "Next steps" list. Windows' version omits zsh/tmux
   (not present there) but is otherwise the same reference.
+- **Fixed a real Superfile theming bug** (found via a real Raspberry Pi/
+  ClockworkPi device): Superfile themes appeared broken after running the
+  script — manually re-selecting the same theme name fixed it, then it
+  broke again on the next rerun. Root cause: Superfile ships 20+ real
+  bundled themes of its own, including ones named exactly `dracula` and
+  `catppuccin-*` — the same names this repo's own theme choices use.
+  Writing our custom theme file under that same bare name silently
+  collided with Superfile's built-in one of the same name; `config.toml`
+  ended up correctly saying e.g. `theme = "dracula"`, but Superfile loaded
+  its own bundled Dracula colors instead of the file this script had just
+  written (confirmed live: the device showed the exact right theme name
+  in `config.toml` while still rendering the wrong colors). Fixed by
+  preferring Superfile's real bundled theme directly wherever an exact
+  match exists (`dracula` → `dracula`; `catppuccin` → `catppuccin-macchiato`,
+  since that's the flavor this repo's `catppuccin` choice actually uses;
+  `catppuccin_mocha` → `catppuccin-mocha`) instead of generating a
+  redundant, colliding custom file for those three. The other five theme
+  choices (`m365princess`, `atomic`, `jandedobbeleer`, `marcduiker`,
+  `neko`) have no bundled Superfile equivalent, so they still fall back to
+  a generated custom theme file — now prefixed (`tt-<name>`) so it can
+  never collide with any bundled name, present or future. Applied
+  identically across all four scripts. Verified end-to-end: bundled-match
+  themes write straight to `config.toml` with no custom file created;
+  fallback themes generate and reference their own `tt-`-prefixed file;
+  switching between the two on a rerun updates `config.toml` correctly.
