@@ -232,6 +232,41 @@ anyone who wants real zsh on Windows.
   custom file created; fallback themes generate and reference their own
   `tt`-prefixed file; switching between a bundled and a fallback theme on
   a rerun updates `config.toml` correctly either direction.
+- **The bundled-theme collision fix above was necessary but not
+  sufficient — found via the same real device reporting "still the wrong
+  theme" after that fix shipped.** Live debugging ruled out, in order:
+  multiple `spf` installs, env var overrides (`XDG_CONFIG_HOME`/
+  `SUPERFILE_CONFIG_DIR`, both empty), a version mismatch (`dracula.toml`
+  confirmed present in the exact `v1.6.0` tag, not just `main`), and the
+  wrong file being read at all — `strace -f -e trace=openat -o
+  /tmp/spf-trace.log spf` proved `~/.config/superfile/theme/dracula.toml`
+  opens successfully (`fd=7`, no error) when `theme = "dracula"` is set.
+  A full dump of that file's contents also confirmed genuinely correct
+  Dracula hex colors throughout, ruling out a corrupted/stale write too.
+  Root cause: `$COLORTERM` was empty on the device (`TERM=tmux-256color`
+  inside tmux, `TERM=xterm-256color` outside it — `COLORTERM=` unset
+  either way). Superfile's underlying Go TUI color library — and to a
+  lesser extent oh-my-posh/bat/lsd — does its own truecolor capability
+  detection off `$COLORTERM` and silently downsamples 24-bit RGB to a
+  worse-looking lossy approximation when it's unset, even on a terminal
+  (Windows Terminal, here, both over SSH and confirmed independently on
+  native Windows) that fully supports real truecolor. Tmux was ruled out
+  specifically first — `tmux set -ga terminal-overrides ",*:Tc"` made no
+  visible difference live, and neither did leaving tmux entirely — before
+  landing on `$COLORTERM`. Confirmed live: `export COLORTERM=truecolor;
+  spf` produced a dramatically corrected render (genuine dark
+  charcoal-purple Dracula background, replacing a flat wrong-looking
+  bright navy blue), screenshot-verified against the official Dracula
+  reference at superfile.dev. Fixed by exporting `COLORTERM=truecolor`
+  unconditionally in all four scripts' generated shell config — the
+  managed `.zshrc` block (right after the `PATH`/`ZSH_CUSTOM` exports, before
+  the oh-my-posh `eval`) on the three bash-based scripts, and the
+  equivalent spot in `$PROFILE` on `setup-windows.ps1` (`` `$env:COLORTERM
+  = "truecolor"`` — backtick-escaped like the file's other `$env:` vars
+  inside the same here-string, e.g. `` `$env:BAT_THEME``). Safe to set
+  unconditionally for the terminals this repo targets: Windows Terminal
+  and virtually every modern Linux/Termux terminal emulator already
+  genuinely support truecolor, so this only stops them from hiding it.
 - Switchable-but-idempotent config blocks: `.zshrc`/`.tmux.conf`/the
   PowerShell `$PROFILE` all use a strip-then-reappend pattern — if the
   `# >>> custom terminal setup >>>` / `# <<< ... <<<` marker pair is

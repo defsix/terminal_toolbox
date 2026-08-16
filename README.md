@@ -549,3 +549,36 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   themes write straight to `config.toml` with no custom file created;
   fallback themes generate and reference their own `tt-`-prefixed file;
   switching between the two on a rerun updates `config.toml` correctly.
+
+### 2026-08-16
+- **Fixed the real root cause behind the Superfile theming bug above —
+  the bundled-theme collision fix landed but the user reported it was
+  "still the wrong theme."** Ruled out, in order, via live debugging on
+  the same real device: multiple `spf` installs, env var overrides
+  (`XDG_CONFIG_HOME`/`SUPERFILE_CONFIG_DIR`), a version mismatch (`dracula`
+  exists in the exact `v1.6.0` tag), and the wrong file being read at all
+  (`strace -f -e trace=openat spf` proved `~/.config/superfile/theme/
+  dracula.toml` opens successfully, no error). A full dump of that file's
+  contents also confirmed genuinely correct Dracula hex colors throughout
+  — so the right file, with the right colors, was being loaded and still
+  rendering wrong. Root cause: `$COLORTERM` was empty (`TERM=tmux-256color`
+  inside tmux, `TERM=xterm-256color` outside it, `COLORTERM=` unset either
+  way). Superfile's underlying Go TUI color library — and to a lesser
+  extent oh-my-posh/bat/lsd — checks `$COLORTERM` to decide whether it's
+  safe to emit real 24-bit RGB color codes, and silently downsamples to a
+  worse-looking approximation if it's unset, even on a terminal (Windows
+  Terminal, here, over SSH) that fully supports truecolor. Ruled out tmux
+  specifically first (`tmux set -ga terminal-overrides ",*:Tc"` made no
+  visible difference, and neither did leaving tmux entirely), then
+  confirmed the actual fix live: `export COLORTERM=truecolor; spf` showed
+  a dramatically corrected render (the genuine dark charcoal-purple
+  Dracula background, replacing what had been a flat, wrong-looking bright
+  navy blue) — screenshot-verified against the official Dracula reference
+  at superfile.dev. The same empty-`$COLORTERM` symptom was independently
+  confirmed on native Windows too, not just over SSH. All four scripts now
+  export `COLORTERM=truecolor` unconditionally in their generated shell
+  config (`.zshrc`'s managed block on the three bash-based scripts,
+  `$PROFILE` on `setup-windows.ps1`) — safe for the terminals this repo
+  targets, since Windows Terminal and every modern Linux/Termux terminal
+  emulator genuinely support truecolor already; this just stops them from
+  hiding it.

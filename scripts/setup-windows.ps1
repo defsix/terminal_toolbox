@@ -455,6 +455,18 @@ if (-not [string]::IsNullOrEmpty($ProfileContent)) {
 @"
 
 $Mark
+# Terminal apps that do their own capability detection (Superfile, and to a
+# lesser extent oh-my-posh/bat/lsd) check `$env:COLORTERM to decide whether
+# it's safe to emit real 24-bit RGB color codes, and silently downsample to
+# a worse-looking approximation if it's unset - even on a terminal that
+# fully supports truecolor. Found on a real device: Superfile's theme file
+# had verified-correct Dracula hex colors and was confirmed (via strace,
+# over SSH to a Linux box from this same Windows Terminal) to be loading
+# the right file, yet rendered a completely wrong-looking palette;
+# `$env:COLORTERM was empty, and manually exporting it fixed the rendering
+# immediately - the same symptom was reported on native Windows too. Safe
+# to set unconditionally since Windows Terminal genuinely supports truecolor.
+`$env:COLORTERM = "truecolor"
 oh-my-posh init pwsh --config "$ThemePath" | Invoke-Expression
 zoxide init powershell | Out-String | Invoke-Expression
 

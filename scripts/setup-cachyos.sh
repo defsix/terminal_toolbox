@@ -686,6 +686,18 @@ cat >> "$HOME/.zshrc" << EOF
 
 $MARK
 export PATH="\$HOME/.local/bin:\$PATH"
+# Terminal apps that do their own capability detection (Superfile, and to a
+# lesser extent oh-my-posh/bat/lsd) check \$COLORTERM to decide whether it's
+# safe to emit real 24-bit RGB color codes, and silently downsample to a
+# worse-looking approximation if it's unset — even on a terminal that fully
+# supports truecolor. Found on a real device: Superfile's theme file had
+# verified-correct Dracula hex colors and was confirmed (via strace) to be
+# loading the right file, yet rendered a completely different, wrong-looking
+# palette; \$COLORTERM was empty both inside and outside tmux, and manually
+# exporting it fixed the rendering immediately. Safe to set unconditionally
+# for the terminals this repo targets (Windows Terminal, and virtually every
+# modern Linux terminal emulator all genuinely support truecolor).
+export COLORTERM="truecolor"
 eval "\$(oh-my-posh init zsh --config \$HOME/.poshthemes/${THEME}.omp.json)"
 eval "\$(zoxide init zsh)"
 
