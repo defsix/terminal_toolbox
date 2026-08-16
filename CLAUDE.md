@@ -714,6 +714,34 @@ anyone who wants real zsh on Windows.
   in-process does not reproduce it, since nested `setsid`-based detachment
   attempts silently no-op when the caller is already a session/process-group
   leader.
+- **`raw.githubusercontent.com` caches for up to 5 minutes — found via a
+  real device reporting the `COLORTERM` fix "still doesn't work" right
+  after it was pushed to `main`.** All four one-liners in this README
+  fetch from `raw.githubusercontent.com/.../main/scripts/...`, which is
+  served through a Fastly CDN with `cache-control: max-age=300` — GitHub
+  usually purges that cache fast on push, but purge propagation across
+  edge nodes isn't instant, so a one-liner run within a few minutes of a
+  push can silently pull the *previous* version of a script from a stale
+  edge, with no error or warning that anything's off. This produced a
+  long, misleading debugging trail on a real device: a completely correct
+  fix (verified with `strace`, screenshots, and a live manual test) looked
+  like it wasn't taking effect, and several wrong theories got chased
+  first (stale shell needing a new terminal, a duplicate-marker bug in
+  `.zshrc` that turned out to be two *different*, both-expected marker
+  pairs, a competing system-wide zsh config) before dumping the user's
+  actual on-disk `.zshrc` and finding the managed block simply didn't
+  contain the new line at all — proving the *script that ran* predated
+  the fix, not that the fix was wrong. Confirmed the caching theory
+  directly: `curl -fsSI` on the same URL showed `x-cache: HIT` with a
+  nonzero `Age` during the affected window. **Lesson for next time a user
+  reports "I pulled the fix but it's not doing anything": don't just trust
+  that the one-liner fetched fresh — check `curl -fsSI <raw-url>` for
+  `x-cache`/`age`/`source-age` headers, or just grep the user's actual
+  generated file (`.zshrc`/`config.toml`/`$PROFILE`) for the new content
+  directly, before re-deriving the fix from scratch.** If a fix needs to
+  be verified immediately after pushing, append a cache-busting query
+  string to the raw URL (e.g. `...setup-ubuntu.sh?$(date +%s)`) rather
+  than waiting out the cache window.
 
 ## Known gaps / open questions
 
@@ -746,6 +774,23 @@ anyone who wants real zsh on Windows.
   rest of `.zshrc` still loads fine, fzf's key bindings/completion just
   don't get wired up — but worth knowing if this is ever run inside a slim
   container rather than a real machine.
+- **Superfile's own config schema can drift out from under an older
+  `config.toml` — surfaced on a real device mid-`COLORTERM` debugging,
+  not yet fixed.** A device with a `config.toml` written by this repo a
+  while back hit `spf` refusing to start at all: "missing fields: [...]",
+  listing dozens of keys, with a prompt to run `spf --fix-config-file`.
+  Root cause: newer Superfile releases have added config keys over time,
+  and this repo's `config.toml` (originally just `theme = "..."`, per the
+  note above about never invoking `--fix-config-file` from the script
+  itself) never gets backfilled with them — it only ever gets its `theme =`
+  line patched. Worked around manually in this case (the user ran
+  `spf --fix-config-file` themselves in their own real terminal — safe
+  when a human does it interactively, since they can just quit the TUI it
+  opens; only the *script* invoking it non-interactively is the hazard,
+  per the existing note above). Not yet handled by the scripts themselves
+  — doing so safely would need a way to detect "config exists but is
+  missing keys a current Superfile expects" without shelling out to
+  `--fix-config-file` directly, which isn't solved yet.
 
 ## Owner context
 

@@ -582,3 +582,23 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   targets, since Windows Terminal and every modern Linux/Termux terminal
   emulator genuinely support truecolor already; this just stops them from
   hiding it.
+- **Found (immediately after the `COLORTERM` fix above shipped): the
+  one-liners can silently serve a stale, pre-fix script for a few minutes
+  after a push.** A real device re-ran the one-liner right after the fix
+  landed on `main` and reported it "still doesn't work" — a long false
+  trail followed (checked for a stale shell, a duplicate-marker bug in
+  `.zshrc` that turned out to be two different, both-expected marker
+  pairs, a competing system-wide zsh config) before dumping the device's
+  actual `.zshrc` and finding its managed block simply didn't contain the
+  new line — the *script that ran* predated the fix. Root cause:
+  `raw.githubusercontent.com` (what every one-liner in this README fetches
+  from) sits behind a CDN with a 5-minute cache, and purge-on-push isn't
+  always instant across every edge node, so a one-liner run within a few
+  minutes of a push can pull the previous version with no error or
+  warning. Confirmed directly with `curl -fsSI <raw-url>`, showing
+  `x-cache: HIT` with a nonzero age during the affected window. No code
+  fix for this — it's an inherent property of fetching from a CDN-backed
+  URL — but if you ever re-run a one-liner right after a fix is announced
+  and it doesn't seem to have taken effect, try again in a few minutes,
+  or bust the cache with a query string:
+  `bash <(curl -fsSL "https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-ubuntu.sh?$(date +%s)")`.
