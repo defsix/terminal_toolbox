@@ -602,3 +602,14 @@ See `CLAUDE.md` for implementation notes and known platform quirks.
   and it doesn't seem to have taken effect, try again in a few minutes,
   or bust the cache with a query string:
   `bash <(curl -fsSL "https://raw.githubusercontent.com/defsix/terminal_toolbox/main/scripts/setup-ubuntu.sh?$(date +%s)")`.
+- **Defaulted the Dracula tmux status bar's weather widget to Celsius.**
+  A user asked where the battery/network/weather info at the bottom of
+  their tmux status bar was coming from — it's not this repo's own code,
+  it's `dracula/tmux`'s bundled `battery network weather` default plugin
+  set (this repo never narrows `@dracula-plugins`, so upstream's default
+  applies as-is). The `weather` widget pulls live local conditions from
+  wttr.in by IP geolocation, easy to mistake for a device/CPU temperature
+  reading. It also defaults to Fahrenheit upstream. All three bash-based
+  scripts now set `set -g @dracula-show-fahrenheit false` in `.tmux.conf`,
+  placed above the existing `run-shell .../dracula.tmux` line since the
+  plugin reads its `@dracula-*` options when it runs, not lazily.

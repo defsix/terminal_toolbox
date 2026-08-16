@@ -394,7 +394,20 @@ anyone who wants real zsh on Windows.
   `~/.tmux/plugins/dracula` and adding a single `run-shell
   <absolute-path>/dracula.tmux` line to `.tmux.conf` — no TPM (tmux plugin
   manager) needed, which would require an interactive `prefix + I` step
-  this repo can't script non-interactively anyway.
+  this repo can't script non-interactively anyway. The status bar this
+  produces (only for the Dracula theme choice — see the theme-3/tmux-mode
+  bullets elsewhere for why every other theme gets a plain hand-colored bar
+  instead) isn't custom to this repo: it's `dracula/tmux`'s own bundled
+  `battery network weather` default plugin set, unlocked because the
+  script never sets `@dracula-plugins` to anything narrower. The `weather`
+  widget renders local conditions via wttr.in based on IP geolocation —
+  easy to mistake for a device/CPU temperature sensor reading, it isn't
+  one. That plugin also defaults to Fahrenheit
+  (`@dracula-show-fahrenheit` defaults `true` in the upstream script) — this
+  repo sets `set -g @dracula-show-fahrenheit false` right before the
+  `run-shell` line (order matters: the plugin reads its `@dracula-*`
+  options at run time, so the override has to land in `.tmux.conf` above
+  it) to default to Celsius instead.
 - zoxide: `zoxide init zsh` / `zoxide init powershell`, both first-party
   and stable — no version-compatibility concerns like fzf's `--zsh` flag.
 - nerdfetch (Linux/Termux only — its own project explicitly excludes

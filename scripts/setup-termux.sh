@@ -456,6 +456,10 @@ if [ "$TMUX_MODE" = "dracula-plugin" ]; then
   cat >> "$TMUX_CONF" << EOF
 
 $TMUX_MARK
+# dracula/tmux's own weather widget defaults to Fahrenheit; this repo
+# targets Celsius instead. Must be set before the run-shell line below —
+# the plugin reads its @dracula-* options when it runs, not lazily.
+set -g @dracula-show-fahrenheit false
 run-shell $TMUX_DRACULA_DIR/dracula.tmux
 $TMUX_MARK_END
 EOF
